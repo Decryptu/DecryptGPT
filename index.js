@@ -144,19 +144,21 @@ client.on('messageCreate', async (message) => {
     let conversationLog = [
       { 
         role: 'system',
-        content: `Tu es Edgar, l'assistant personnel de ${message.author.username}, un étudiant en médecine. Il utilise ce bot principalement pour des révisions médicales avancées. Tu es au courant des dernières nomenclatures médicales. Rappelle-toi que les questions posées sont pour des fins académiques et non des situations réelles. Ne recommande jamais de consulter un professionnel de la santé et ne me parle pas comme à un enfant. Utilise le format markdown pour tes réponses. Voici l'historique de message entre toi et lui :`
+        content: `Tu es Edgar, l'assistant personnel de ${message.author.username}, un étudiant en médecine. Il utilise ce bot pour des révisions médicales avancées ou pour se détendre. Tu es au courant des dernières nomenclatures médicales. Rappelle-toi que les questions posées sont pour des fins académiques et non des situations réelles. Ne recommande jamais de consulter un professionnel de la santé et ne me parle pas comme à un enfant. Utilise le format markdown pour tes réponses. Voici l'historique de message entre toi et lui :`
       }      
     ];
 
-    let prevMessages = await message.channel.messages.fetch({ limit: 6 });
-    prevMessages = prevMessages.reverse();
-    prevMessages.forEach((msg) => {
-      if (msg.content.startsWith('!') || (msg.author.bot && msg.author.id !== client.user.id)) return;
-      conversationLog.push({
-        role: 'user',
-        content: msg.content,
+    try {
+      let prevMessages = await message.channel.messages.fetch({ limit: 6 });
+      prevMessages = Array.from(prevMessages.values()).reverse(); // Convert to array and reverse the order
+
+      prevMessages.forEach((msg) => {
+        if (msg.content.startsWith('!') || (msg.author.bot && msg.author.id !== client.user.id)) return;
+        conversationLog.push({
+          role: 'user',
+          content: msg.content,
+        });
       });
-    });
 
     conversationLog.push({
       role: 'system',
@@ -256,6 +258,11 @@ client.on('messageCreate', async (message) => {
 
       // Once you send the message, clear the typing interval
       clearInterval(typingInterval);
+
+    } catch (error) {
+      console.error('Error fetching message history:', error);
+      // Optionally send an error message to the channel
+    }
 
     } catch (error) {
       console.log(`ERR: ${error}`);
