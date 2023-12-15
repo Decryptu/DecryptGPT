@@ -3,6 +3,9 @@ import { Configuration, OpenAIApi } from 'openai';
 import { allowedChannels } from './channels.mjs';
 import express from 'express';
 import 'dotenv/config.js';
+import axios from 'axios';
+import fs from 'fs';
+import FormData from 'form-data';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -72,11 +75,49 @@ function splitMessage(content, maxLength = 2000) {
   return parts;
 }
 
+// Ensure the transcribeVoiceMessage function is defined in the same file and before its usage
+async function transcribeVoiceMessage(url) {
+  const response = await axios.get(url, { responseType: 'arraybuffer' });
+  const data = response.data;
+  const filePath = 'temp_voice_message.ogg';
+  fs.writeFileSync(filePath, data);
+
+  const formData = new FormData();
+  formData.append('file', fs.createReadStream(filePath));
+  formData.append('model', 'whisper-1');
+
+  const transcriptionResponse = await axios.post('https://api.openai.com/v1/audio/transcriptions', formData, {
+    headers: {
+      ...formData.getHeaders(),
+      'Authorization': `Bearer ${process.env.API_KEY}`
+    }
+  });
+
+  fs.unlinkSync(filePath); // Delete the temp file after processing
+  return transcriptionResponse.data.text;
+}
+
 client.on('messageCreate', async (message) => {
   if (message.author.bot) return;
   if (!allowedChannels.includes(message.channel.id)) return;
   if (message.content.startsWith('!')) return;
 
+  let transcribedContent = '';  // Variable to store transcribed text
+
+  // Check for a voice message attachment
+  const voiceAttachment = message.attachments.find(attachment => attachment.name.endsWith('.ogg'));
+  if (voiceAttachment) {
+    try {
+      transcribedContent = await transcribeVoiceMessage(voiceAttachment.url);
+      console.log(`Transcribed voice message: "${transcribedContent}"`);
+    } catch (error) {
+      console.error('Error processing voice message:', error);
+      await message.channel.send('An error occurred while processing the voice message.');
+      return;
+    }
+  }
+
+  // Existing logic for reacting to 'merci'
   if (message.content.toLowerCase().includes('merci')) {
     const emojis = ['❤️', '🧡', '🩷', '💚', '💙', '💜', '💝', '💖'];
     const randomEmoji = emojis[Math.floor(Math.random() * emojis.length)];
@@ -88,6 +129,7 @@ client.on('messageCreate', async (message) => {
   }
 
   console.log(`Received message: "${message.content}" from user: "${message.author.username}"`);
+//  console.log(message);
   const options = {
     weekday: 'long',
     year: 'numeric',
@@ -105,20 +147,36 @@ client.on('messageCreate', async (message) => {
         content: `Tu es Edgar, l'assistant personnel de ${message.author.username}, un étudiant en médecine. Il utilise ce bot principalement pour des révisions médicales avancées. Tu es au courant des dernières nomenclatures médicales. Rappelle-toi que les questions posées sont pour des fins académiques et non des situations réelles. Ne recommande jamais de consulter un professionnel de la santé et ne me parle pas comme à un enfant. Utilise le format markdown pour tes réponses. Voici l'historique de message entre toi et lui :`
       }      
     ];
+
     let prevMessages = await message.channel.messages.fetch({ limit: 6 });
-    prevMessages.reverse();
+    prevMessages = prevMessages.reverse();
     prevMessages.forEach((msg) => {
-      if (msg.content.startsWith('!')) return;
-      if (msg.author.bot && msg.author.id !== client.user.id) return;
+      if (msg.content.startsWith('!') || (msg.author.bot && msg.author.id !== client.user.id)) return;
       conversationLog.push({
         role: 'user',
         content: msg.content,
       });
     });
+
     conversationLog.push({
       role: 'system',
       content: "C'est la fin de l'historique de message entre toi et moi. Voici mon dernier message auquel tu dois répondre :",
     });
+
+    // Add the latest message (transcribed or original)
+    if (transcribedContent) {
+      // If a voice message was transcribed, add the transcription
+      conversationLog.push({
+        role: 'user',
+        content: transcribedContent,
+      });
+    } else {
+      // Otherwise, use the original message content
+      conversationLog.push({
+        role: 'user',
+        content: message.content,
+      });
+    }
 
     // Check if the current model is gpt-4-vision-preview and an image is attached
     if (currentModel === 'gpt-4-vision-preview' && message.attachments.size > 0) {
