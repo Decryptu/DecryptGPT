@@ -1,15 +1,15 @@
 {
-    "name": "edgargpt",
-    "version": "2.0.0",
-    "description": "",
+    "name": "DecryptGPT",
+    "version": "3.0.0",
+    "description": "A Discord bot leveraging OpenAI's GPT models for interactive AI conversations and tasks.",
     "main": "index.js",
     "type": "module",
     "scripts": {
         "dev": "nodemon index.js",
         "start": "node index.js"
     },
-    "keywords": [],
-    "author": "",
+    "keywords": ["discord", "bot", "AI", "OpenAI", "GPT-3", "discord.js"],
+    "author": "Decrypt",
     "license": "ISC",
     "dependencies": {
         "discord.js": "^14.11.0",
@@ -17,6 +17,9 @@
         "express": "^4.18.2",
         "openai": "^3.3.0"
     },
+    "engines": {
+        "node": ">=18.0.0"
+    },    
     "devDependencies": {
         "nodemon": "^3.0.1"
     }
