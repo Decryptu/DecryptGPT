@@ -1,6 +1,6 @@
 # DecryptGPT
 
-DecryptGPT is an advanced Discord bot developed by Decrypt, utilizing the `discord.js` library, OpenAI's powerful language models GPT-3, GPT-4, and the image-processing capabilities of GPT-4 Vision, along with OpenAI's Whisper model for transcribing voice messages. This bot offers a multifaceted AI experience within Discord channels, capable of engaging in text conversations, responding to voice inputs, and analyzing visual content.
+DecryptGPT is an advanced Discord bot developed by Decrypt, utilizing the `discord.js` library, along with OpenAI's powerful language models GPT-3, GPT-4, and the image-processing capabilities of GPT-4 Vision, complemented by OpenAI's Whisper model for transcribing voice messages. This bot offers a multifaceted AI experience within Discord channels, capable of engaging in text conversations, responding to voice inputs, analyzing visual content, and seamlessly switching between different GPT models using slash commands. Whether for advanced medical revisions, casual interactions, or exploring the capabilities of AI, DecryptGPT is designed to enrich the Discord chat experience.
 
 ## Features
 
