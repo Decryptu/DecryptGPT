@@ -1,7 +1,7 @@
 import { allowedChannels } from '../channels.mjs';
 import splitMessage from '../utils/splitMessage.js';
 import transcribeVoiceMessage from '../utils/transcribeVoiceMessage.js';
-import { INITIAL_PROMPT, FINAL_PROMPT, MAX_RETRIES, CHAT_GPT_ENABLED, PREV_MESSAGES_LIMIT, AI_NAME } from '../config.js';
+import { THANK_YOU_KEYWORD, EMOJI_LIST, INITIAL_PROMPT, FINAL_PROMPT, MAX_RETRIES, CHAT_GPT_ENABLED, PREV_MESSAGES_LIMIT, AI_NAME } from '../config.js';
 
 async function messageCreate(message, client) {
   if (message.author.bot) return;
@@ -22,9 +22,8 @@ async function messageCreate(message, client) {
     }
   }
 
-  if (message.content.toLowerCase().includes('merci')) {
-    const emojis = ['❤️', '🧡', '🩷', '💚', '💙', '💜', '💝', '💖'];
-    const randomEmoji = emojis[Math.floor(Math.random() * emojis.length)];
+  if (message.content.toLowerCase().includes(THANK_YOU_KEYWORD)) {
+    const randomEmoji = EMOJI_LIST[Math.floor(Math.random() * EMOJI_LIST.length)];
     try {
       await message.react(randomEmoji);
     } catch (error) {
