@@ -1,7 +1,7 @@
 import { allowedChannels } from '../channels.mjs';
 import splitMessage from '../utils/splitMessage.js';
 import transcribeVoiceMessage from '../utils/transcribeVoiceMessage.js';
-import { MAX_RETRIES, CHAT_GPT_ENABLED, PREV_MESSAGES_LIMIT, AI_NAME } from '../config.js';
+import { INITIAL_PROMPT, FINAL_PROMPT, MAX_RETRIES, CHAT_GPT_ENABLED, PREV_MESSAGES_LIMIT, AI_NAME } from '../config.js';
 
 async function messageCreate(message, client) {
   if (message.author.bot) return;
@@ -38,7 +38,7 @@ async function messageCreate(message, client) {
     let conversationLog = [
       { 
         role: 'system',
-        content: `Tu es ${AI_NAME}, l'assistant personnel de ${message.author.username}, un étudiant en médecine...` // Truncated for brevity
+        content: INITIAL_PROMPT(AI_NAME, message.author.username)
       }
     ];
 
@@ -53,7 +53,7 @@ async function messageCreate(message, client) {
 
       conversationLog.push({
         role: 'system',
-        content: "C'est la fin de l'historique de message entre toi et moi...",
+        content: FINAL_PROMPT
       });
 
       if (transcribedContent) {
