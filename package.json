@@ -1,5 +1,5 @@
 {
-    "name": "DecryptGPT",
+    "name": "decryptgpt",
     "version": "3.0.0",
     "description": "A Discord bot leveraging OpenAI's GPT models for interactive AI conversations and tasks.",
     "main": "index.js",
