@@ -11,6 +11,14 @@
     "keywords": ["discord", "bot", "AI", "OpenAI", "GPT-3", "discord.js"],
     "author": "Decrypt",
     "license": "ISC",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/Decryptu/DecryptGPT.git"
+    },
+    "bugs": {
+        "url": "https://github.com/Decryptu/DecryptGPT/issues"
+    },
+    "homepage": "https://github.com/Decryptu/DecryptGPT#readme",        
     "dependencies": {
         "discord.js": "^14.11.0",
         "dotenv": "^16.3.1",
