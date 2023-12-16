@@ -32,6 +32,8 @@ Before running DecryptGPT, some configurations are required:
   export const GPT_4 = 'gpt-4-1106-preview'; // GPT-4 model
   export const GPT_V = 'gpt-4-vision-preview'; // GPT-4 Vision model
   export const DEFAULT_MODEL = GPT_3; // Default model on startup
+  export const INITIAL_PROMPT = (AI_NAME, username) => `You are ${AI_NAME}, you will assist ${username}, a student. This is our chat history:`; // Initial conversation prompt
+  export const FINAL_PROMPT = "This is the end of chat history between us, here is my request:"; // Final conversation prompt
   ```
 
 ## Installation
