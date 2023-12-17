@@ -46,6 +46,7 @@ async function reactWithRandomEmoji(message) {
 async function buildConversationLog(message, client) {
   let conversationLog = [{ role: 'system', content: INITIAL_PROMPT(AI_NAME, message.author.username) }];
   
+  // Add previous messages
   const prevMessages = await message.channel.messages.fetch({ limit: PREV_MESSAGES_LIMIT });
   prevMessages.reverse().forEach(msg => {
     if (msg.content.startsWith('!') || (msg.author.bot && msg.author.id !== client.user.id)) return;
@@ -54,6 +55,7 @@ async function buildConversationLog(message, client) {
 
   conversationLog.push({ role: 'system', content: FINAL_PROMPT });
 
+  // Handle voice or image messages
   const transcribedContent = await handleVoiceMessage(message);
   if (transcribedContent) {
     conversationLog.push({ role: 'user', content: transcribedContent });
