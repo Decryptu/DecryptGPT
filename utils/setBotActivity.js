@@ -1,21 +1,19 @@
 import { GPT_3, GPT_4, GPT_V } from '../config.js';
 
+const modelStatusMap = {
+  [GPT_4]: "🐇 GPT-4",
+  [GPT_3]: "🐢 GPT-3.5",
+  [GPT_V]: "👁️ GPT-4 Vision"
+};
+
 function setBotActivity(client, model) {
-  let status = "";
-  switch (model) {
-    case GPT_4:
-      status = "🐇 GPT-4";
-      break;
-    case GPT_3:
-      status = "🐢 GPT-3.5";
-      break;
-    case GPT_V:
-      status = "👁️ GPT-4 Vision";
-      break;
-    default:
-      status = "Idle";
+  const status = modelStatusMap[model] || "Idle";
+
+  try {
+    client.user.setActivity(status);
+  } catch (error) {
+    console.error("Error setting bot activity:", error);
   }
-  client.user.setActivity(status);
 }
 
 export default setBotActivity;
