@@ -1,136 +1,142 @@
 import { allowedChannels } from '../channels.mjs';
 import splitMessage from '../utils/splitMessage.js';
 import transcribeVoiceMessage from '../utils/transcribeVoiceMessage.js';
-import { GPT_V, THANK_YOU_KEYWORD, EMOJI_LIST, INITIAL_PROMPT, FINAL_PROMPT, MAX_RETRIES, CHAT_GPT_ENABLED, PREV_MESSAGES_LIMIT, AI_NAME } from '../config.js';
+import {
+  GPT_V, THANK_YOU_KEYWORD, EMOJI_LIST, INITIAL_PROMPT, FINAL_PROMPT, 
+  MAX_RETRIES, CHAT_GPT_ENABLED, PREV_MESSAGES_LIMIT, AI_NAME 
+} from '../config.js';
 
 async function messageCreate(message, client) {
-  if (message.author.bot) return;
-  if (!allowedChannels.includes(message.channel.id)) return;
-  if (message.content.startsWith('!')) return;
+  if (shouldIgnoreMessage(message)) return;
 
-  let transcribedContent = '';
-
-  const voiceAttachment = message.attachments.find(attachment => attachment.name.endsWith('.ogg'));
-  if (voiceAttachment) {
-    try {
-      transcribedContent = await transcribeVoiceMessage(voiceAttachment.url, process.env.API_KEY);
-      console.log(`Transcribed voice message: "${transcribedContent}"`);
-    } catch (error) {
-      console.error('Error processing voice message:', error);
-      await message.channel.send('An error occurred while processing the voice message.');
-      return;
-    }
+  try {
+    await processMessage(message, client);
+  } catch (error) {
+    console.error('Error processing message:', error);
+    await handleApiErrors(message, error);
   }
+}
 
+function shouldIgnoreMessage(message) {
+  return message.author.bot 
+    || !allowedChannels.includes(message.channel.id) 
+    || message.content.startsWith('!');
+}
+
+async function processMessage(message, client) {
   if (message.content.toLowerCase().includes(THANK_YOU_KEYWORD)) {
-    const randomEmoji = EMOJI_LIST[Math.floor(Math.random() * EMOJI_LIST.length)];
-    try {
-      await message.react(randomEmoji);
-    } catch (error) {
-      console.error('Erreur lors de l\'ajout de la réaction:', error);
-    }
+    await reactWithRandomEmoji(message);
   }
-
-  console.log(`Received message: "${message.content}" from user: "${message.author.username}"`);
 
   if (CHAT_GPT_ENABLED) {
-    let conversationLog = [
-      { 
-        role: 'system',
-        content: INITIAL_PROMPT(AI_NAME, message.author.username)
-      }
-    ];
+    const conversationLog = await buildConversationLog(message, client);
+    await respondToMessage(message, client, conversationLog);
+  }
+}
 
-    try {
-      let prevMessages = await message.channel.messages.fetch({ limit: PREV_MESSAGES_LIMIT });
-      prevMessages = Array.from(prevMessages.values()).reverse();
+async function reactWithRandomEmoji(message) {
+  const randomEmoji = EMOJI_LIST[Math.floor(Math.random() * EMOJI_LIST.length)];
+  try {
+    await message.react(randomEmoji);
+  } catch (error) {
+    console.error('Error adding reaction:', error);
+  }
+}
 
-      prevMessages.forEach((msg) => {
-        if (msg.content.startsWith('!') || (msg.author.bot && msg.author.id !== client.user.id)) return;
-        conversationLog.push({ role: 'user', content: msg.content });
-      });
+async function buildConversationLog(message, client) {
+  let conversationLog = [{ role: 'system', content: INITIAL_PROMPT(AI_NAME, message.author.username) }];
+  
+  const prevMessages = await message.channel.messages.fetch({ limit: PREV_MESSAGES_LIMIT });
+  prevMessages.reverse().forEach(msg => {
+    if (msg.content.startsWith('!') || (msg.author.bot && msg.author.id !== client.user.id)) return;
+    conversationLog.push({ role: 'user', content: msg.content });
+  });
 
-      conversationLog.push({
-        role: 'system',
-        content: FINAL_PROMPT
-      });
+  conversationLog.push({ role: 'system', content: FINAL_PROMPT });
 
-      if (transcribedContent) {
-        conversationLog.push({ role: 'user', content: transcribedContent });
-      } else {
-        conversationLog.push({ role: 'user', content: message.content });
-      }
+  const transcribedContent = await handleVoiceMessage(message);
+  if (transcribedContent) {
+    conversationLog.push({ role: 'user', content: transcribedContent });
+  } else if (client.currentModel === GPT_V && message.attachments.size > 0) {
+    const imageAttachment = message.attachments.first();
+    const imageUrl = imageAttachment.url.split('?')[0];
+    console.log(`Cleaned Image URL: ${imageUrl}`);
+    conversationLog.push({
+      role: 'user',
+      content: [{ type: "text", text: message.content }, { type: "image_url", image_url: imageUrl }],
+    });
+  } else {
+    conversationLog.push({ role: 'user', content: message.content });
+  }
 
-      if (client.currentModel === GPT_V && message.attachments.size > 0) {
-        const imageAttachment = message.attachments.first();
-        let imageUrl = imageAttachment.url.split('?')[0];
-        console.log(`Cleaned Image URL: ${imageUrl}`);
-        conversationLog.push({
-          role: 'user',
-          content: [{ type: "text", text: message.content }, { type: "image_url", image_url: imageUrl }],
-        });
-      } else {
-        conversationLog.push({ role: 'user', content: message.content });
-      }
+  return conversationLog;
+}
 
-      const typingInterval = setInterval(() => message.channel.sendTyping(), 5000);
+async function handleVoiceMessage(message) {
+  const voiceAttachment = message.attachments.find(attachment => attachment.name.endsWith('.ogg'));
+  if (!voiceAttachment) return null;
 
+  try {
+    const transcribedContent = await transcribeVoiceMessage(voiceAttachment.url, process.env.API_KEY);
+    console.log(`Transcribed voice message: "${transcribedContent}"`);
+    return transcribedContent;
+  } catch (error) {
+    console.error('Error transcribing voice message:', error);
+    await message.channel.send('An error occurred while processing the voice message.');
+    return null;
+  }
+}
+
+async function respondToMessage(message, client, conversationLog) {
+  const typingInterval = setInterval(() => message.channel.sendTyping(), 5000);
+
+  try {
+    await message.channel.sendTyping();
+    let attempts = 0;
+    let result;
+
+    while (attempts < MAX_RETRIES) {
       try {
-        await message.channel.sendTyping();
+        let requestPayload = {
+          model: client.currentModel,
+          messages: conversationLog,
+        };
 
-        let attempts = 0;
-        let result;
-        while (attempts < MAX_RETRIES) {
-          try {
-
-            let requestPayload = {
-              model: client.currentModel,
-              messages: conversationLog,
-            };
-
-            if (client.currentModel === GPT_V) {
-              requestPayload.max_tokens = 4096;
-            }
-
-            result = await client.openai.createChatCompletion(requestPayload);
-            break;
-          } catch (error) {
-            attempts++;
-            console.log(`OPENAI ERR (tentative ${attempts}): ${error}`);
-            if (attempts === MAX_RETRIES) throw error;
-          }
+        if (client.currentModel === GPT_V) {
+          requestPayload.max_tokens = 4096;
         }
 
-        const messageContent = result.data.choices[0].message.content;
-        const tokenUsage = result.data.usage.total_tokens;
-        console.log(`Tokens used: ${tokenUsage}`);
-        const messageParts = splitMessage(messageContent);
-        for (const part of messageParts) {
-          await message.channel.send(part);
-        }
-
-        clearInterval(typingInterval);
-
+        result = await client.openai.createChatCompletion(requestPayload);
+        break;
       } catch (error) {
-        console.error('Error:', error);
-        clearInterval(typingInterval);
-        await handleApiErrors(message, error);
+        attempts++;
+        console.log(`OPENAI ERR (attempt ${attempts}): ${error}`);
+        if (attempts === MAX_RETRIES) throw error;
       }
-    } catch (error) {
-      console.log(`ERR: ${error}`);
-      clearInterval(typingInterval);
-      await handleApiErrors(message, error);
     }
+
+    const messageContent = result.data.choices[0].message.content;
+    const tokenUsage = result.data.usage.total_tokens;
+    console.log(`Tokens used: ${tokenUsage}`);
+    const messageParts = splitMessage(messageContent);
+    for (const part of messageParts) {
+      await message.channel.send(part);
+    }
+  } catch (error) {
+    console.error('Error:', error);
+    await handleApiErrors(message, error);
+  } finally {
+    clearInterval(typingInterval);
   }
 }
 
 async function handleApiErrors(message, error) {
   if (error.response && error.response.status === 401) {
-    message.channel.send("Problème d'authentification avec l'API OpenAI. Veuillez vérifier les clés d'API.");
+    await message.channel.send("Authentication issue with the OpenAI API. Please check the API keys.");
   } else if (error.response && error.response.status === 429) {
-    message.channel.send("Trop de demandes. Réessayez plus tard.");
+    await message.channel.send("Too many requests. Please try again later.");
   } else {
-    message.channel.send("Erreur lors du traitement de la requête. Contactez Decrypt si le problème persiste.");
+    await message.channel.send("An error occurred while processing your request. Please contact support if the problem persists.");
   }
 }
 
