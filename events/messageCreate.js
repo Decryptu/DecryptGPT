@@ -136,7 +136,7 @@ async function handleApiErrors(message, error) {
   } else if (error.response && error.response.status === 429) {
     await message.channel.send("Too many requests. Please try again later.");
   } else {
-    await message.channel.send("An error occurred while processing your request. Please contact support if the problem persists.");
+    await message.channel.send("An error occurred while processing your request. Please contact Decrypt if the problem persists.");
   }
 }
 
