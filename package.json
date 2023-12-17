@@ -22,7 +22,7 @@
     "dependencies": {
         "discord.js": "^14.11.0",
         "dotenv": "^16.3.1",
-        "axios": "^0.27.2",
+        "axios": "^0.26.1",
         "form-data": "^4.0.0",
         "openai": "^3.3.0"
     },
