@@ -16,7 +16,7 @@ app.get('/', (req, res) => {
   res.send(`${AI_NAME} is alive!`);
 });
 
-app.listen(PORT, () => {
+let server = app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
 
@@ -50,3 +50,29 @@ const configuration = new Configuration({
 client.openai = new OpenAIApi(configuration);
 
 client.login(process.env.TOKEN);
+
+let isShuttingDown = false;
+
+async function gracefulShutdown() {
+  if (isShuttingDown) return; // Prevent multiple shutdowns
+  isShuttingDown = true;
+
+  console.log('Shutting down gracefully...');
+
+  // Shut down the Discord client
+  try {
+    await client.destroy();
+    console.log('Bot logged out from Discord');
+  } catch (error) {
+    console.error('Error during Discord client shutdown:', error);
+  }
+
+  // Shut down the Express server
+  server.close(() => {
+    console.log('Express server closed');
+  });
+}
+
+// Signal handling for graceful shutdown
+process.on('SIGINT', gracefulShutdown);
+process.on('SIGTERM', gracefulShutdown);
