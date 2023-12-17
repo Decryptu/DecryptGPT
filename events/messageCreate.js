@@ -1,7 +1,7 @@
 import { allowedChannels } from '../channels.mjs';
 import splitMessage from '../utils/splitMessage.js';
 import transcribeVoiceMessage from '../utils/transcribeVoiceMessage.js';
-import { THANK_YOU_KEYWORD, EMOJI_LIST, INITIAL_PROMPT, FINAL_PROMPT, MAX_RETRIES, CHAT_GPT_ENABLED, PREV_MESSAGES_LIMIT, AI_NAME } from '../config.js';
+import { GPT_V, THANK_YOU_KEYWORD, EMOJI_LIST, INITIAL_PROMPT, FINAL_PROMPT, MAX_RETRIES, CHAT_GPT_ENABLED, PREV_MESSAGES_LIMIT, AI_NAME } from '../config.js';
 
 async function messageCreate(message, client) {
   if (message.author.bot) return;
@@ -61,7 +61,7 @@ async function messageCreate(message, client) {
         conversationLog.push({ role: 'user', content: message.content });
       }
 
-      if (client.currentModel === 'gpt-4-vision-preview' && message.attachments.size > 0) {
+      if (client.currentModel === GPT_V && message.attachments.size > 0) {
         const imageAttachment = message.attachments.first();
         let imageUrl = imageAttachment.url.split('?')[0];
         console.log(`Cleaned Image URL: ${imageUrl}`);
@@ -88,7 +88,7 @@ async function messageCreate(message, client) {
               messages: conversationLog,
             };
 
-            if (client.currentModel === 'gpt-4-vision-preview') {
+            if (client.currentModel === GPT_V) {
               requestPayload.max_tokens = 4096;
             }
 
