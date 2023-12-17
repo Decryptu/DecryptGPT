@@ -18,7 +18,7 @@
     "bugs": {
         "url": "https://github.com/Decryptu/DecryptGPT/issues"
     },
-    "homepage": "https://github.com/Decryptu/DecryptGPT#readme",        
+    "homepage": "https://github.com/Decryptu/DecryptGPT#readme",
     "dependencies": {
         "discord.js": "^14.11.0",
         "dotenv": "^16.3.1",
