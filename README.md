@@ -1,12 +1,13 @@
 # DecryptGPT
 
-DecryptGPT is an advanced Discord bot developed by Decrypt, utilizing the `discord.js` library, along with OpenAI's powerful language models GPT-3, GPT-4, and the image-processing capabilities of GPT-4 Vision, complemented by OpenAI's Whisper model for transcribing voice messages. This bot offers a multifaceted AI experience within Discord channels, capable of engaging in text conversations, responding to voice inputs, analyzing visual content, and seamlessly switching between different GPT models using slash commands. Whether for advanced medical revisions, casual interactions, or exploring the capabilities of AI, DecryptGPT is designed to enrich the Discord chat experience.
+DecryptGPT is an advanced Discord bot developed by Decrypt, utilizing the `discord.js` library, along with OpenAI's powerful language models GPT-3, GPT-4, and the image-processing capabilities of GPT-4 Vision. Now featuring OpenAI's DALL-E for image generation, and complemented by OpenAI's Whisper model for transcribing voice messages, this bot offers a multifaceted AI experience within Discord channels. Capable of engaging in text conversations, responding to voice inputs, analyzing and generating visual content, and seamlessly switching between different GPT models using slash commands, DecryptGPT is designed to enrich the Discord chat experience, whether for advanced medical revisions, casual interactions, or exploring the capabilities of AI.
 
 ## Features
 
 - **Multiple GPT Modes**: Choose between GPT-3, GPT-4, or GPT-4 Vision for diverse interactions.
 - **Voice Message Understanding**: DecryptGPT can transcribe voice messages and respond to them, making interaction more seamless.
 - **Image Recognition**: With GPT-4 Vision, the bot can interpret images sent in the chat, adding a new dimension to AI conversations.
+- **Image Generation with DALL-E**: Generate images from textual descriptions using DALL-E, adding a creative flair to the Discord experience.
 - **Customizable Configuration**: Tailor the bot's behavior through the `config.js` file, including setting the AI name, choosing the default GPT model, and more.
 
 ## Configuration
@@ -26,6 +27,7 @@ Before running DecryptGPT, some configurations are required:
   ```javascript
   export const MAX_RETRIES = 3; // Number of retries before throwing an error
   export const CHAT_GPT_ENABLED = true; // Enable or disable the bot
+  export const DALL_E_ENABLED = true; // Enable or disable image generation
   export const PREV_MESSAGES_LIMIT = 6; // Limit of previous messages to fetch
   export const AI_NAME = 'Edgar'; // AI's name
   export const GPT_3 = 'gpt-3.5-turbo-1106'; // GPT-3 model
@@ -36,6 +38,9 @@ Before running DecryptGPT, some configurations are required:
   export const EMOJI_LIST = ['❤️', '🧡', '🩷', '💚', '💙', '💜', '💝', '💖']; // List of emojis for reactions
   export const INITIAL_PROMPT = (AI_NAME, username) => `You are ${AI_NAME}, you will assist ${username}, a student. This is our chat history:`; // Initial conversation prompt
   export const FINAL_PROMPT = "This is the end of chat history between us, here is my request:"; // Final conversation prompt
+  export const DALL_E_IMAGE_COUNT = 1; // Number of images to generate per prompt
+  export const DALL_E_IMAGE_SIZE = "512x512"; // Size of the generated images
+  export const DALL_E_MAX_PROMPT_LENGTH = 100; // Maximum length of the image prompt
   ```
 
 ## Installation

@@ -16,11 +16,22 @@ async function ready(client) {
     {
       name: 'gpt-vision',
       description: 'Passer au modèle GPT-4 Vision',
+    },
+    {
+      name: 'image',
+      description: 'Générer une image avec DALL-E',
+      options: [{
+        type: 3,
+        name: 'description',
+        description: 'Description de l\'image à générer',
+        required: true,
+      }],
     }
   ];
 
   try {
-    await client.application.commands.set(commands);
+    await client.application?.commands.set(commands);
+    console.log('Commands set successfully');
   } catch (error) {
     console.error("Error setting up commands:", error);
   }

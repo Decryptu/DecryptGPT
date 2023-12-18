@@ -7,6 +7,7 @@ import interactionCreate from './events/interactionCreate.js';
 import messageCreate from './events/messageCreate.js';
 import ready from './events/ready.js';
 import setBotActivity from './utils/setBotActivity.js';
+import createDallEImage from './utils/createDallEImage.js';
 import { AI_NAME, DEFAULT_MODEL } from './config.js';
 
 // const app = express();
@@ -40,14 +41,16 @@ const client = new Client({
 client.currentModel = DEFAULT_MODEL;
 client.setBotActivity = (model) => setBotActivity(client, model);
 
-client.on('ready', () => ready(client));
-client.on('messageCreate', (message) => messageCreate(message, client));
-client.on('interactionCreate', (interaction) => interactionCreate(interaction, client));
-
 const configuration = new Configuration({
   apiKey: process.env.API_KEY,
 });
 client.openai = new OpenAIApi(configuration);
+
+client.createDallEImage = (description) => createDallEImage(client, description);
+
+client.on('ready', () => ready(client));
+client.on('messageCreate', (message) => messageCreate(message, client));
+client.on('interactionCreate', (interaction) => interactionCreate(interaction, client));
 
 client.login(process.env.TOKEN);
 

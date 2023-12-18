@@ -1,11 +1,13 @@
 import gpt3 from '../commands/gpt3.js';
 import gpt4 from '../commands/gpt4.js';
 import gptVision from '../commands/gpt-vision.js';
+import dalle from '../commands/dalle.js';
 
 const commandHandlers = {
   'gpt4': gpt4,
   'gpt3': gpt3,
-  'gpt-vision': gptVision
+  'gpt-vision': gptVision,
+  'image': dalle
 };
 
 async function interactionCreate(interaction, client) {
