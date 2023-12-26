@@ -1,6 +1,5 @@
 import { Client, IntentsBitField, Partials } from 'discord.js';
 import { Configuration, OpenAIApi } from 'openai';
-// import express from 'express';
 import 'dotenv/config.js';
 
 import interactionCreate from './events/interactionCreate.js';
@@ -9,17 +8,6 @@ import ready from './events/ready.js';
 import setBotActivity from './utils/setBotActivity.js';
 import createDallEImage from './utils/createDallEImage.js';
 import { AI_NAME, DEFAULT_MODEL } from './config.js';
-
-// const app = express();
-// const PORT = process.env.PORT || 3000;
-
-// app.get('/', (req, res) => {
-//   res.send(`${AI_NAME} is alive!`);
-// });
-
-// let server = app.listen(PORT, () => {
-//   console.log(`Server is running on port ${PORT}`);
-// });
 
 const client = new Client({
   intents: [
@@ -69,13 +57,6 @@ async function gracefulShutdown() {
   } catch (error) {
     console.error('Error during Discord client shutdown:', error);
   }
-
-  // Shut down the Express server
-  // if (server) {
-  //   server.close(() => {
-  //     console.log('Express server closed');
-  //   });
-  // }
 }
 
 // Signal handling for graceful shutdown
