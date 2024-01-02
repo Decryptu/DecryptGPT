@@ -24,6 +24,8 @@ function shouldIgnoreMessage(message) {
 }
 
 async function processMessage(message, client) {
+  console.log(`User Message: "${message.content}"`);
+
   if (message.content.toLowerCase().includes(THANK_YOU_KEYWORD)) {
     await reactWithRandomEmoji(message);
   }
