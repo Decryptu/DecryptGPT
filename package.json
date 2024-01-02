@@ -34,7 +34,7 @@
         "openai": "^4.24.1"
     },
     "engines": {
-        "node": ">=18.0.0"
+        "node": ">=20.10.0"
     },
     "devDependencies": {
         "nodemon": "^3.0.1"
