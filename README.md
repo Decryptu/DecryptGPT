@@ -41,7 +41,7 @@ Before running DecryptGPT, some configurations are required:
   export const INITIAL_PROMPT = (AI_NAME, username) => `You are ${AI_NAME}, you will assist ${username}, a student. This is our chat history:`; // Initial conversation prompt
   export const FINAL_PROMPT = "This is the end of chat history between us, here is my request:"; // Final conversation prompt
   export const DALL_E_IMAGE_COUNT = 1; // Number of images to generate per prompt
-  export const DALL_E_IMAGE_SIZE = "512x512"; // Size of the generated images
+  export const DALL_E_IMAGE_SIZE = "1024x1024"; // Size of the generated images
   export const DALL_E_MAX_PROMPT_LENGTH = 100; // Maximum length of the image prompt
   ```
 
