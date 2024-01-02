@@ -20,4 +20,4 @@ export const FINAL_PROMPT = "C'est la fin de l'historique de message entre toi e
 // DALL-E Configuration
 export const DALL_E_IMAGE_COUNT = 1; // Number of images to generate per prompt
 export const DALL_E_IMAGE_SIZE = "1024x1024"; // Size of the generated images
-export const DALL_E_MAX_PROMPT_LENGTH = 100; // Maximum length of the image prompt
+export const DALL_E_MAX_PROMPT_LENGTH = 512; // Maximum length of the image prompt
