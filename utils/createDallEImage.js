@@ -2,21 +2,21 @@ import { DALL_E_IMAGE_COUNT, DALL_E_IMAGE_SIZE } from '../config.js';
 
 async function createDallEImage(client, promptText) {
     try {
-        const response = await client.openai.createImage({
+        const response = await client.openai.images.generate({
+            model: "dall-e-3",  // Ensure this matches your model
             prompt: promptText,
-            n: DALL_E_IMAGE_COUNT,
-            size: DALL_E_IMAGE_SIZE
+            n: DALL_E_IMAGE_COUNT,  // This should be 1 for DALL·E 3
+            size: DALL_E_IMAGE_SIZE  // Confirm this is a supported size
         });
 
-        if (response && response.data && response.data.data[0] && response.data.data[0].url) {
-            return response.data.data[0].url;
+        if (response && response.data && response.data[0] && response.data[0].url) {
+            return response.data[0].url;
         } else {
-            console.error("Unexpected API response format:", response);
-            throw new Error("Unexpected API response format");
+            throw new Error("No image URL in response");
         }
     } catch (error) {
-        console.error('Error while creating image:', error);
-        throw error;
+        console.error('Error in createDallEImage:', error);
+        throw error;  // Rethrow the error to handle it in the calling function
     }
 }
 
