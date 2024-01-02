@@ -8,6 +8,7 @@ export const AI_NAME = 'Edgar'; // AI Name
 export const GPT_3 = 'gpt-3.5-turbo-1106'; // Use latest gpt3 model
 export const GPT_4 = 'gpt-4-1106-preview'; // Use latest gpt4 model
 export const GPT_V = 'gpt-4-vision-preview'; // Use latest gpt vision model
+export const DALLE_LATEST = 'dall-e-3'; // Use latest dall-e model
 export const DEFAULT_MODEL = GPT_3; // Default model on boot
 export const THANK_YOU_KEYWORD = 'merci'; // Keyword to trigger emoji reaction
 export const EMOJI_LIST = ['❤️', '🧡', '🩷', '💚', '💙', '💜', '💝', '💖']; // List of emojis for reactions

@@ -1,9 +1,9 @@
-import { DALL_E_IMAGE_COUNT, DALL_E_IMAGE_SIZE } from '../config.js';
+import { DALL_E_IMAGE_COUNT, DALL_E_IMAGE_SIZE, DALLE_LATEST } from '../config.js';
 
 async function createDallEImage(client, promptText) {
     try {
         const response = await client.openai.images.generate({
-            model: "dall-e-3",  // Ensure this matches your model
+            model: DALLE_LATEST,  // Use the DALL-E model version from config
             prompt: promptText,
             n: DALL_E_IMAGE_COUNT,  // This should be 1 for DALL·E 3
             size: DALL_E_IMAGE_SIZE  // Confirm this is a supported size
