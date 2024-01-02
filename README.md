@@ -43,6 +43,22 @@ Before running DecryptGPT, some configurations are required:
   export const DALL_E_MAX_PROMPT_LENGTH = 100; // Maximum length of the image prompt
   ```
 
+## Discord Gateway Intents Configuration
+
+To ensure the bot functions correctly, you must configure Discord Gateway Intents in the Discord Developer Portal. This allows the bot to listen to specific events on your Discord server. Follow these steps:
+
+1. Navigate to the [Discord Developer Portal](https://discord.com/developers/applications).
+2. Select your application (bot).
+3. Click on the "Bot" section in the settings menu.
+4. Scroll down to "Privileged Gateway Intents."
+5. Enable the following intents based on your bot's needs:
+   - `SERVER MEMBERS INTENT` (if your bot uses server member data)
+   - `MESSAGE CONTENT INTENT` (for reading message content in text channels)
+   - `PRESENCE INTENT` (if your bot uses presence data, like user status)
+6. Save your changes.
+
+Without these intents, the bot may not be able to access all the necessary data from your Discord server and could encounter issues like the "Used disallowed intents" error.
+
 ## Installation
 
 1. Clone the repository:
