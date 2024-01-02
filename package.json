@@ -8,7 +8,14 @@
         "dev": "nodemon index.js",
         "start": "node index.js"
     },
-    "keywords": ["discord", "bot", "AI", "OpenAI", "GPT-3", "discord.js"],
+    "keywords": [
+        "discord",
+        "bot",
+        "AI",
+        "OpenAI",
+        "GPT-3",
+        "discord.js"
+    ],
     "author": "Decrypt",
     "license": "ISC",
     "repository": {
@@ -20,15 +27,15 @@
     },
     "homepage": "https://github.com/Decryptu/DecryptGPT#readme",
     "dependencies": {
-        "discord.js": "^14.11.0",
-        "dotenv": "^16.3.1",
         "axios": "^0.26.1",
+        "discord.js": "^14.14.1",
+        "dotenv": "^16.3.1",
         "form-data": "^4.0.0",
-        "openai": "^3.3.0"
+        "openai": "^4.24.1"
     },
     "engines": {
         "node": ">=18.0.0"
-    },    
+    },
     "devDependencies": {
         "nodemon": "^3.0.1"
     }

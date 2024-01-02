@@ -1,5 +1,5 @@
 import { Client, IntentsBitField, Partials } from 'discord.js';
-import { Configuration, OpenAIApi } from 'openai';
+import OpenAI from 'openai';
 import 'dotenv/config.js';
 
 import interactionCreate from './events/interactionCreate.js';
@@ -29,10 +29,9 @@ const client = new Client({
 client.currentModel = DEFAULT_MODEL;
 client.setBotActivity = (model) => setBotActivity(client, model);
 
-const configuration = new Configuration({
+client.openai = new OpenAI({
   apiKey: process.env.API_KEY,
 });
-client.openai = new OpenAIApi(configuration);
 
 client.createDallEImage = (description) => createDallEImage(client, description);
 

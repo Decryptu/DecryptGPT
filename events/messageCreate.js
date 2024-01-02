@@ -108,7 +108,7 @@ async function respondToMessage(message, client, conversationLog) {
           requestPayload.max_tokens = 4096;
         }
 
-        result = await client.openai.createChatCompletion(requestPayload);
+        result = await client.openai.chat.completions.create(requestPayload);
         break;
       } catch (error) {
         attempts++;
@@ -117,8 +117,8 @@ async function respondToMessage(message, client, conversationLog) {
       }
     }
 
-    const messageContent = result.data.choices[0].message.content;
-    const tokenUsage = result.data.usage.total_tokens;
+    const messageContent = result.choices[0].message.content;
+    const tokenUsage = result.usage.total_tokens;
     console.log(`Tokens used: ${tokenUsage}`);
     const messageParts = splitMessage(messageContent);
     for (const part of messageParts) {
