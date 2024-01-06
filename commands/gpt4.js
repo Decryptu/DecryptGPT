@@ -1,4 +1,3 @@
-// gpt4.js
 import { GPT_4 } from '../config.js';
 
 async function gpt4(interaction, client) {
