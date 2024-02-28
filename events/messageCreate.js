@@ -63,8 +63,8 @@ async function buildConversationLog(message, client) {
     conversationLog.push({ role: 'user', content: transcribedContent });
   } else if (client.currentModel === GPT_V && message.attachments.size > 0) {
     const imageAttachment = message.attachments.first();
-    const imageUrl = imageAttachment.url.split('?')[0];
-    console.log(`Cleaned Image URL: ${imageUrl}`);
+    const imageUrl = imageAttachment.url; // Keep the entire URL including query parameters
+    console.log(`Image URL: ${imageUrl}`);
     conversationLog.push({
       role: 'user',
       content: [{ type: "text", text: message.content }, { type: "image_url", image_url: imageUrl }],
