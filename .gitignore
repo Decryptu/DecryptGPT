@@ -97,3 +97,10 @@ dist
 # Temporary folders
 tmp/
 temp/
+
+# pm2 config
+ecosystem.config.cjs
+ecosystem.config.js
+
+# Audio files
+speech-*.mp3

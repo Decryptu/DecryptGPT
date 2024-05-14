@@ -1,13 +1,12 @@
-import { GPT_3, GPT_4, GPT_V } from '../config.js';
+import { GPT_MODE } from "../config.js";
 
-const modelStatusMap = {
-  [GPT_4]: "🐇 GPT-4",
-  [GPT_3]: "🐢 GPT-3.5",
-  [GPT_V]: "👁️ GPT-4 Vision"
+const modeStatusMap = {
+  [GPT_MODE.TEXT]: "✍🏻 GPT-TEXT",
+  [GPT_MODE.VOICE]: "🎙️ GPT-VOICE",
 };
 
-function setBotActivity(client, model) {
-  const status = modelStatusMap[model] || "Idle";
+function setBotActivity(client, mode) {
+  const status = modeStatusMap[mode] || "Idle";
 
   try {
     client.user.setActivity(status);

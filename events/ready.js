@@ -1,37 +1,37 @@
-import { AI_NAME } from '../config.js';
+import { AI_NAME, DEFAULT_MODE } from "../config.js";
+import setBotActivity from "../utils/setBotActivity.js";
 
 async function ready(client) {
   console.log(`${AI_NAME} is online!`);
-  client.setBotActivity(client.currentModel);
+  client.currentMode = DEFAULT_MODE; // Initialize the current mode to the default mode
+  setBotActivity(client, client.currentMode); // Set the initial activity
 
   const commands = [
     {
-      name: 'gpt4',
-      description: 'Passer au modèle GPT-4',
+      name: "gpt-voice",
+      description: "Switch to GPT-VOICE mode",
     },
     {
-      name: 'gpt3',
-      description: 'Passer au modèle GPT-3.5',
+      name: "gpt-text",
+      description: "Switch to GPT-TEXT mode",
     },
     {
-      name: 'gpt-vision',
-      description: 'Passer au modèle GPT-4 Vision',
+      name: "image",
+      description: "Generate an image with DALL-E",
+      options: [
+        {
+          type: 3,
+          name: "description",
+          description: "Description of the image to generate",
+          required: true,
+        },
+      ],
     },
-    {
-      name: 'image',
-      description: 'Générer une image avec DALL-E',
-      options: [{
-        type: 3,
-        name: 'description',
-        description: 'Description de l\'image à générer',
-        required: true,
-      }],
-    }
   ];
 
   try {
     await client.application?.commands.set(commands);
-    console.log('Commands set successfully');
+    console.log("Commands set successfully");
   } catch (error) {
     console.error("Error setting up commands:", error);
   }
