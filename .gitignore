@@ -104,3 +104,4 @@ ecosystem.config.js
 
 # Audio files
 speech-*.mp3
+config.js
