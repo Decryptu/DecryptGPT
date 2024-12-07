@@ -106,3 +106,4 @@ ecosystem.config.js
 speech-*.mp3
 .env
 config.js
+package-lock.json
