@@ -7,6 +7,8 @@ import {
 import transcribeVoiceMessage from "./transcribeVoiceMessage.js";
 import extractFileContent from "./extractFileContent.js";
 
+const SUPPORTED_FILE_TYPES = ['.pdf', '.txt', '.csv', '.xls', '.xlsx'];
+
 async function buildConversationLog(message, client) {
   const conversationLog = [
     {
@@ -50,40 +52,55 @@ async function buildConversationLog(message, client) {
     const attachmentPromises = Array.from(message.attachments.values()).map(async (attachment) => {
       if (attachment.name.endsWith('.ogg')) return null;
       
-      // Handle PDFs and text files
-      if (attachment.name.endsWith('.pdf') || attachment.name.endsWith('.txt')) {
+      // Check if this is a supported file type
+      const isExtractableFile = SUPPORTED_FILE_TYPES.some(ext => attachment.name.toLowerCase().endsWith(ext));
+      
+      if (isExtractableFile) {
         try {
+          console.log(`Processing file: ${attachment.name}`);
           const extractedText = await extractFileContent(attachment);
           return {
             type: "text",
-            text: `Content from ${attachment.name}:\n${extractedText}`,
+            text: `Content from ${attachment.name}:\n${extractedText}`
           };
         } catch (error) {
           console.error(`Error extracting content from ${attachment.name}:`, error);
-          return null;
+          return {
+            type: "text",
+            text: `Failed to process ${attachment.name}: ${error.message}`
+          };
         }
       }
       
-      // Handle images
+      // If not a supported file type, treat as image
+      if (attachment.contentType?.startsWith('image/')) {
+        return {
+          type: "image_url",
+          image_url: { url: attachment.url }
+        };
+      }
+      
+      // For unsupported file types, add a note
       return {
-        type: "image_url",
-        image_url: { url: attachment.url },
+        type: "text",
+        text: `Note: File ${attachment.name} is not a supported format.`
       };
     });
 
     const processedAttachments = (await Promise.all(attachmentPromises)).filter(Boolean);
 
     if (processedAttachments.length > 0) {
-      conversationLog.push({
+      const userMessage = {
         role: "user",
         content: [
           {
             type: "text",
-            text: message.content,
+            text: message.content || "Please analyze this file."
           },
-          ...processedAttachments,
-        ],
-      });
+          ...processedAttachments
+        ]
+      };
+      conversationLog.push(userMessage);
     }
   } else {
     conversationLog.push({
