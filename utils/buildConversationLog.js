@@ -5,6 +5,7 @@ import {
   AI_NAME,
 } from "../config.js";
 import transcribeVoiceMessage from "./transcribeVoiceMessage.js";
+import extractFileContent from "./extractFileContent.js";
 
 async function buildConversationLog(message, client) {
   const conversationLog = [
@@ -20,15 +21,11 @@ async function buildConversationLog(message, client) {
   const reversedMessages = Array.from(prevMessages.values()).reverse();
 
   for (const msg of reversedMessages) {
-    if (
-      msg.content.startsWith("!") ||
-      (msg.author.bot && msg.author.id !== client.user.id)
-    ) {
+    if (msg.content.startsWith("!") || (msg.author.bot && msg.author.id !== client.user.id)) {
       continue;
     }
 
     const role = msg.author.id === client.user.id ? "assistant" : "user";
-
     conversationLog.push({
       role: role,
       content: msg.content,
@@ -50,17 +47,33 @@ async function buildConversationLog(message, client) {
 
   if (message.attachments.size > 0) {
     console.log(`Message contains ${message.attachments.size} attachments.`);
-    const imageAttachments = Array.from(message.attachments.values())
-      .filter((attachment) => !attachment.name.endsWith(".ogg"))
-      .map((attachment) => {
-        console.log(`Image attachment URL: ${attachment.url}`);
-        return {
-          type: "image_url",
-          image_url: { url: attachment.url },
-        };
-      });
+    const attachmentPromises = Array.from(message.attachments.values()).map(async (attachment) => {
+      if (attachment.name.endsWith('.ogg')) return null;
+      
+      // Handle PDFs and text files
+      if (attachment.name.endsWith('.pdf') || attachment.name.endsWith('.txt')) {
+        try {
+          const extractedText = await extractFileContent(attachment);
+          return {
+            type: "text",
+            text: `Content from ${attachment.name}:\n${extractedText}`,
+          };
+        } catch (error) {
+          console.error(`Error extracting content from ${attachment.name}:`, error);
+          return null;
+        }
+      }
+      
+      // Handle images
+      return {
+        type: "image_url",
+        image_url: { url: attachment.url },
+      };
+    });
 
-    if (imageAttachments.length > 0) {
+    const processedAttachments = (await Promise.all(attachmentPromises)).filter(Boolean);
+
+    if (processedAttachments.length > 0) {
       conversationLog.push({
         role: "user",
         content: [
@@ -68,7 +81,7 @@ async function buildConversationLog(message, client) {
             type: "text",
             text: message.content,
           },
-          ...imageAttachments,
+          ...processedAttachments,
         ],
       });
     }
