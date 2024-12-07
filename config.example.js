@@ -10,6 +10,7 @@ export const GPT_MODE = {
 export const AI_NAME = "DecryptGPT"; // AI Name
 export const MAX_RETRIES = 3; // Number of retries before throwing an error
 export const PREV_MESSAGES_LIMIT = 6; // Chat history limit
+export const MAX_TOKENS = 4096; // Maximum number of tokens
 export const CHAT_GPT_ENABLED = true; // Enable or disable the bot
 export const DALL_E_ENABLED = true; // Enable or disable image generation
 export const DEFAULT_MODE = GPT_MODE.TEXT; // Default model on boot

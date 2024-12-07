@@ -1,11 +1,23 @@
 import splitMessage from "./splitMessage.js";
 import handleApiErrors from "./handleApiErrors.js";
-import { GPT_MODE, MODEL_NAME, MAX_RETRIES, BETTER_LOG } from "../config.js";
+import { 
+  GPT_MODE, 
+  MODEL_NAME, 
+  MAX_RETRIES, 
+  BETTER_LOG,
+  MAX_TOKENS 
+} from "../config.js";
 import fs from "node:fs";
 import path from "node:path";
 
 let lastSpeechFile = null;
 
+/**
+ * Handles responding to a message with either text or voice
+ * @param {Message} message - The Discord message to respond to
+ * @param {Client} client - The Discord client instance
+ * @param {Array} conversationLog - Array of previous messages for context
+ */
 async function respondToMessage(message, client, conversationLog) {
   const typingInterval = setInterval(() => message.channel.sendTyping(), 5000);
 
@@ -22,7 +34,7 @@ async function respondToMessage(message, client, conversationLog) {
         };
 
         if (client.currentMode === GPT_MODE.TEXT) {
-          requestPayload.max_tokens = 4096;
+          requestPayload.max_tokens = MAX_TOKENS;
         }
 
         if (BETTER_LOG) {
@@ -61,6 +73,12 @@ async function respondToMessage(message, client, conversationLog) {
   }
 }
 
+/**
+ * Handles generating and sending TTS audio responses
+ * @param {Message} message - The Discord message to respond to
+ * @param {Client} client - The Discord client instance
+ * @param {string} text - The text to convert to speech
+ */
 async function sendTtsResponse(message, client, text) {
   const speechFile = path.resolve(`./speech-${Date.now()}.mp3`);
 
@@ -75,9 +93,11 @@ async function sendTtsResponse(message, client, text) {
       voice: "echo",
       input: text,
     });
+
     const buffer = Buffer.from(await mp3.arrayBuffer());
     await fs.promises.writeFile(speechFile, buffer);
     lastSpeechFile = speechFile;
+
     await message.channel.send({
       files: [
         {
