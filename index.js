@@ -5,7 +5,7 @@ import "dotenv/config.js";
 import interactionCreate from "./events/interactionCreate.js";
 import messageCreate from "./events/messageCreate.js";
 import ready from "./events/ready.js";
-import createDallEImage from "./utils/createDallEImage.js";
+import createGptImage from "./utils/createGptImage.js";
 
 const client = new Client({
   intents: [
@@ -24,8 +24,9 @@ client.openai = new OpenAI({
   apiKey: process.env.API_KEY,
 });
 
-client.createDallEImage = (description) =>
-  createDallEImage(client, description);
+// Add the new function
+client.createGptImage = (description) =>
+  createGptImage(client, description);
 
 client.on("ready", () => ready(client));
 client.on("messageCreate", (message) => messageCreate(message, client));
@@ -38,12 +39,11 @@ client.login(process.env.TOKEN);
 let isShuttingDown = false;
 
 async function gracefulShutdown() {
-  if (isShuttingDown) return; // Prevent multiple shutdowns
+  if (isShuttingDown) return;
   isShuttingDown = true;
 
   console.log("Shutting down gracefully...");
 
-  // Shut down the Discord client
   try {
     await client.destroy();
     console.log("Bot logged out from Discord");
@@ -52,6 +52,5 @@ async function gracefulShutdown() {
   }
 }
 
-// Signal handling for graceful shutdown
 process.on("SIGINT", gracefulShutdown);
 process.on("SIGTERM", gracefulShutdown);
