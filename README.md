@@ -1,96 +1,138 @@
-# DecryptGPT
+# EdgarGPT
 
-DecryptGPT is an advanced Discord bot developed by Decrypt, utilizing the `discord.js` library, along with OpenAI's powerful language models GPT-4o and the image-processing capabilities of GPT-4 Vision and GPT-Image-1, complemented by OpenAI's Whisper model for transcribing voice messages. This bot offers a comprehensive AI experience within Discord channels, capable of engaging in text conversations, responding to voice inputs, analyzing visual content, processing documents, generating and editing images, and seamlessly switching between different GPT models using slash commands. Whether for advanced medical revisions, casual interactions, or exploring the capabilities of AI, DecryptGPT is designed to enrich the Discord chat experience.
+EdgarGPT is an advanced Discord bot developed by Decrypt, utilizing the `discord.js` library along with OpenAI's latest models including GPT-4o, GPT-4.1, and o3. The bot features image generation and editing capabilities using GPT-Image-1, voice message transcription with Whisper, and comprehensive document processing. Designed specifically for medical students and professionals, Edgar provides academic assistance and AI-powered conversations in French, making it ideal for advanced medical revisions and study sessions.
 
 ## Features
 
-- **Multiple GPT Modes**: Choose between GPT-4o or GPT-4 Vision for diverse interactions.
-- **Voice Message Understanding**: DecryptGPT can transcribe voice messages and respond to them, making interaction more seamless.
-- **Image Recognition**: With GPT-4 Vision, the bot can interpret images sent in the chat, adding a new dimension to AI conversations.
-- **Image Generation and Editing**: Using GPT-Image-1, the bot can:
-  - **Generate** completely new images based on text prompts.
-  - **Edit** existing uploaded images according to a provided text instruction.
-- **Document Processing**: The bot can analyze and extract text from various file formats:
+- **Multiple AI Models**: Switch between GPT-4o (Edgar), GPT-4.1 (Edgar +), and o3 (Edgar ++) for different conversation experiences
+- **Text and Voice Modes**: Toggle between text and voice interaction modes
+- **Voice Message Transcription**: Automatically transcribes voice messages using OpenAI's Whisper model
+- **Image Analysis**: Interprets and analyzes medical images and other visual content
+- **Image Generation**: Create new images from text descriptions using GPT-Image-1
+- **Image Editing**: Modify existing images based on text instructions
+- **Document Processing**: Extract and analyze content from various file formats:
   - PDF documents
   - Text files (.txt)
-  - CSV files (with data analysis capabilities)
+  - CSV files with data analysis
   - Excel files (.xls, .xlsx) including multiple sheets
-- **Customizable Configuration**: Tailor the bot's behavior through the `config.js` file, including setting the AI name, choosing the default GPT model, and more.
-- **Detailed Logging**: Enable detailed logging for debugging and monitoring interactions.
+- **Medical Focus**: Specialized prompts and responses tailored for medical education and revision
+- **French Language Support**: Primary language support for French medical terminology and conversations
+- **Custom Emotes**: Uses Discord emotes for enhanced interaction feedback
+- **Graceful Shutdown**: Proper cleanup and shutdown handling
 
 ## Slash Commands
 
-DecryptGPT supports several slash commands to interact with the AI:
+EdgarGPT supports the following slash commands:
 
-- `/chat` — Start a conversation with the selected GPT model.
-- `/generate` — Generate a new image from a text prompt using **GPT-Image-1**.
-- `/edit` — Upload an image and provide a prompt to modify it using **GPT-Image-1**.
+- `/gpt-model` — Switch between AI models (GPT-4o, GPT-4.1, o3)
+- `/gpt-mode` — Toggle between text and voice interaction modes
+- `/image-gpt` — Generate new images from text descriptions using GPT-Image-1
+- `/image-edit` — Upload an image and modify it with text instructions
 
-Console logs are included at every major step to ensure visibility on operations (e.g., request sent, response received, errors).
+All commands include comprehensive logging for monitoring and debugging purposes.
 
 ## Configuration
 
-Before running DecryptGPT, some configurations are required:
+Before running EdgarGPT, configure the following:
 
-- **.env File**: Create a `.env` file in the root directory with the following contents:
+### Environment Variables
 
-  ```bash
-  API_KEY=your_openai_api_key
-  TOKEN=your_discord_bot_token
-  CLIENT_ID=your_discord_app_client_id
+Create a `.env` file in the root directory:
 
-Replace your_openai_api_key and your_discord_bot_token with your respective OpenAI API key and Discord bot token.
- • channels.mjs: Edit channels.mjs to include the IDs of the Discord channels where the bot is allowed to operate. Channel IDs can be obtained by enabling Developer Mode in Discord and right-clicking on the channel to copy its ID.
- • config.js: Customize the bot’s settings in config.js.
+```bash
+API_KEY=your_openai_api_key
+TOKEN=your_discord_bot_token
+CLIENT_ID=your_discord_app_client_id
+```
 
-Installation
+Replace the placeholder values with your actual OpenAI API key and Discord bot credentials.
 
- 1. Clone the repository:
+### Channel Configuration
 
-git clone <https://github.com/decryptu/DecryptGPT.git>
- 
- 2. Navigate to the project directory:
+- **channels.mjs**: Add Discord channel IDs where the bot should operate. Enable Developer Mode in Discord and right-click channels to copy their IDs.
 
-cd DecryptGPT
+### Bot Settings
 
- 3. Install dependencies:
+- **config.js**: Customize bot behavior including:
+  - AI personality and prompts (currently optimized for French medical education)
+  - Default model and mode settings
+  - Token limits and retry configurations
+  - Image generation settings
 
-npm install
+## Installation
 
- 4. Install additional packages for document processing:
+1. Clone the repository:
 
-npm install pdf.js-extract xlsx
+```bash
+git clone https://github.com/Decryptu/EdgarGPT.git
+```
 
-Running the Bot
- • To run the bot:
+2. Navigate to the project directory:
 
-npm start
+```bash
+cd EdgarGPT
+```
 
- • For development with hot reloads:
+3. Install dependencies:
 
-npm run dev
+```bash
+bun install
+```
 
-Example Usage
- • Generate an image:
+## Running the Bot
 
-/image prompt: "A futuristic city floating above the clouds"
+- **Production**: `bun start`
+- **Development** (with auto-reload): `bun run dev`
 
-The bot will reply with an original AI-generated image.
+## Usage Examples
 
- • Edit an uploaded image:
+### Generate an image
 
-/image-edit image: [Upload your image] prompt: "Make the sky sunset-themed with flying cars"
+```
+/image-gpt description: "A detailed anatomical diagram of the human heart"
+```
 
-The bot will modify the uploaded image according to the prompt.
+### Edit an uploaded image
 
-Contributing
+```
+/image-edit image: [Upload your image] description: "Add labels to the anatomical structures"
+```
 
-Contributions to DecryptGPT are welcome! Feel free to submit pull requests, create issues, or suggest new features.
+### Switch AI models
 
-License
+```
+/gpt-model model: o3
+```
+
+### Change interaction mode
+
+```
+/gpt-mode mode: voice
+```
+
+## Development
+
+The bot is built with modern JavaScript (ES modules) and includes:
+
+- **Discord.js v14**: Latest Discord API support
+- **OpenAI API v4**: Access to latest AI models
+- **Modular Architecture**: Organized command and event handling
+- **Error Handling**: Comprehensive error logging and recovery
+- **Document Processing**: Support for multiple file formats
+- **Image Processing**: Generation and editing capabilities
+
+## Node.js Requirements
+
+- Node.js >= 18.0.0
+
+## Contributing
+
+Contributions to EdgarGPT are welcome! Feel free to submit pull requests, create issues, or suggest new features.
+
+## License
 
 This project is licensed under the ISC License.
 
-⸻
+---
 
 Developed with ❤️ by Decrypt
