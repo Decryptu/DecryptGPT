@@ -6,19 +6,46 @@ export const GPT_MODE = {
   VOICE: 'GPT_VOICE',
 };
 
+// GPT Models
+export const GPT_MODELS = {
+  GPT4O: 'gpt-4o',
+  GPT41: 'gpt-4.1',
+  O3: 'o3',
+};
+
+// Model-specific configurations
+export const MODEL_CONFIG = {
+  [GPT_MODELS.GPT4O]: {
+    tokenParam: 'max_tokens',
+    maxTokens: 8192,
+  },
+  [GPT_MODELS.GPT41]: {
+    tokenParam: 'max_tokens',
+    maxTokens: 8192,
+  },
+  [GPT_MODELS.O3]: {
+    tokenParam: 'max_completion_tokens',
+    maxTokens: 16384,
+  },
+};
+
+// Model Surnames
+export const MODEL_SURNAMES = {
+  [GPT_MODELS.GPT4O]: 'Edgar',
+  [GPT_MODELS.GPT41]: 'Edgar +',
+  [GPT_MODELS.O3]: 'Edgar ++',
+};
+
 // General Configuration
 export const AI_NAME = 'Edgar'; // AI Name
 export const MAX_RETRIES = 3; // Number of retries before throwing an error
 export const PREV_MESSAGES_LIMIT = 16; // Chat history limit
-export const MAX_TOKENS = 8192; // Maximum number of tokens
+export const MAX_TOKENS = 8192; // Default maximum tokens (used as fallback)
 export const CHAT_GPT_ENABLED = true; // Enable or disable the bot
 export const DALL_E_ENABLED = true; // Enable or disable image generation
 export const DEFAULT_MODE = GPT_MODE.TEXT; // Default model on boot
+export const DEFAULT_MODEL = GPT_MODELS.GPT4O; // Default model
 export const BETTER_LOG = true; // Enable or disable detailed logging
-
-// Model Configuration
-export const MODEL_NAME = 'gpt-4o'; // Single model name
-export const DALLE_LATEST = 'dall-e-3'; // Use latest DALL-E model
 
 // Reaction Configuration
 export const THANK_YOU_KEYWORD = 'merci'; // Keyword to trigger emoji reaction

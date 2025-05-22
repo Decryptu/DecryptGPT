@@ -1,12 +1,9 @@
-import { GPT_MODE } from "../config.js";
+import { GPT_MODE, MODEL_SURNAMES } from "../config.js";
 
-const modeStatusMap = {
-  [GPT_MODE.TEXT]: "✍🏻 GPT-TEXT",
-  [GPT_MODE.VOICE]: "🎙️ GPT-VOICE",
-};
-
-function setBotActivity(client, mode) {
-  const status = modeStatusMap[mode] || "Idle";
+function setBotActivity(client, mode, model) {
+  const modeStatus = mode === GPT_MODE.TEXT ? "✍🏻" : "🎙️";
+  const modelSurname = MODEL_SURNAMES[model] || "Edgar";
+  const status = `${modeStatus} ${modelSurname}`;
 
   try {
     client.user.setActivity(status);

@@ -1,12 +1,12 @@
-import gptText from "../commands/gpt-text.js";
-import gptVoice from "../commands/gpt-voice.js";
+import gptMode from "../commands/gpt-mode.js";
+import gptModel from "../commands/gpt-model.js";
 import imageGpt from "../commands/image-gpt.js";
 import imageEdit from "../commands/image-edit.js";
-import { MessageFlags } from "discord.js";
+import handleInteractionError from "../utils/handleInteractionError.js";
 
 const commandHandlers = {
-  "gpt-text": gptText,
-  "gpt-voice": gptVoice,
+  "gpt-mode": gptMode,
+  "gpt-model": gptModel,
   "image": imageGpt,
   "image-edit": imageEdit,
 };
@@ -29,22 +29,7 @@ async function interactionCreate(interaction, client) {
         error
       );
       
-      try {
-        // Handle the error response based on the interaction state
-        if (interaction.deferred || interaction.replied) {
-          await interaction.editReply({
-            content: "Sorry, there was an error processing your command.",
-          });
-        } else {
-          await interaction.reply({
-            content: "Sorry, there was an error processing your command.",
-            flags: MessageFlags.Ephemeral
-          });
-        }
-      } catch (secondaryError) {
-        // If we can't respond to the interaction, log it but don't crash
-        console.error("Failed to send error message:", secondaryError);
-      }
+      await handleInteractionError(interaction, error);
     }
   } else {
     console.warn(`No handler found for command: ${interaction.commandName}`);

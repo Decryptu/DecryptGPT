@@ -1,6 +1,6 @@
 {
-    "name": "decryptgpt",
-    "version": "4.0.0",
+    "name": "edgargpt",
+    "version": "3.0.1",
     "description": "A Discord bot leveraging OpenAI's GPT models for interactive AI conversations and tasks.",
     "main": "index.js",
     "type": "module",
@@ -30,11 +30,11 @@
         "axios": "^1.9.0",
         "date-fns": "^4.1.0",
         "date-fns-tz": "^3.2.0",
-        "discord.js": "^14.18.0",
+        "discord.js": "^14.19.3",
         "dotenv": "^16.5.0",
         "form-data": "^4.0.2",
-        "openai": "^4.96.0",
-        "papaparse": "^5.5.2",
+        "openai": "^4.103.0",
+        "papaparse": "^5.5.3",
         "pdf.js-extract": "^0.2.1",
         "xlsx": "^0.18.5"
     },

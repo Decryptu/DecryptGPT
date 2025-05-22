@@ -5,36 +5,85 @@ import pkg from 'papaparse';
 const { parse } = pkg;
 
 async function extractFileContent(attachment) {
-  const response = await axios.get(attachment.url, { responseType: 'arraybuffer' });
-  const buffer = Buffer.from(response.data);
+  try {
+    console.log(`Starting to download file from URL: ${attachment.url}`);
+    const response = await axios.get(attachment.url, { 
+      responseType: 'arraybuffer',
+      timeout: 30000 // 30 second timeout to prevent hanging
+    });
+    
+    console.log(`Downloaded file ${attachment.name}, size: ${response.data.byteLength} bytes`);
+    const buffer = Buffer.from(response.data);
 
-  const extension = attachment.name.split('.').pop().toLowerCase();
+    const extension = attachment.name.split('.').pop().toLowerCase();
+    console.log(`Processing file with extension: ${extension}`);
 
-  switch (extension) {
-    case 'pdf':
-      return await extractPdfContent(buffer);
-    case 'txt':
-      return buffer.toString('utf-8');
-    case 'csv':
-      return await extractCsvContent(buffer);
-    case 'xls':
-    case 'xlsx':
-      return extractExcelContent(buffer);
-    default:
-      throw new Error('Unsupported file type');
+    let content = '';
+    
+    switch (extension) {
+      case 'pdf':
+        content = await extractPdfContent(buffer);
+        break;
+      case 'txt':
+        content = buffer.toString('utf-8');
+        break;
+      case 'csv':
+        content = await extractCsvContent(buffer);
+        break;
+      case 'xls':
+      case 'xlsx':
+        content = extractExcelContent(buffer);
+        break;
+      default:
+        content = `Unsupported file type: ${extension}`;
+    }
+    
+    // Check if content is empty and provide feedback
+    if (!content || content.trim() === '') {
+      return `The file ${attachment.name} appears to be empty or could not be processed.`;
+    }
+    
+    console.log(`Successfully extracted content from ${attachment.name}, length: ${content.length} characters`);
+    return content;
+  } catch (error) {
+    console.error(`Error processing file ${attachment.name}:`, error);
+    
+    // Return a user-friendly error message that will be visible in the chat
+    return `Error processing file ${attachment.name}: ${error.message}. Please check if the file is valid and not corrupted.`;
   }
 }
 
 async function extractPdfContent(buffer) {
   try {
     const pdfExtract = new PDFExtract();
-    const data = await pdfExtract.extractBuffer(buffer);
+    const options = {}; // You can add options here if needed
+    
+    // Use more explicit error handling
+    const data = await pdfExtract.extractBuffer(buffer, options);
+    
+    // Add validation to check if we actually got pages
+    if (!data || !data.pages || data.pages.length === 0) {
+      console.error('PDF extraction returned empty data structure');
+      return 'Please inform user the PDF appears to be empty or could not be parsed properly.';
+    }
+    
+    // Add logging to help debug
+    console.log(`Successfully extracted ${data.pages.length} pages from PDF`);
+    
+    // Improve text extraction to handle various PDF structures
     return data.pages
-      .map(page => page.content.map(item => item.str).join(' '))
+      .map((page, pageIndex) => {
+        if (!page.content || page.content.length === 0) {
+          return `[Please inform user that page ${pageIndex + 1} appears to be empty or contains only images]`;
+        }
+        
+        return `--- Page ${pageIndex + 1} ---\n${page.content.map(item => item.str).join(' ')}`;
+      })
       .join('\n\n');
   } catch (error) {
     console.error('Error parsing PDF:', error);
-    throw new Error('Failed to parse PDF file');
+    // Return a more descriptive error that will be visible to the user
+    return `Please inform user we failed to parse PDF file: ${error.message}. The PDF might be encrypted, damaged, or in an unsupported format.`;
   }
 }
 

@@ -2,15 +2,15 @@ import splitMessage from "./splitMessage.js";
 import handleApiErrors from "./handleApiErrors.js";
 import { 
   GPT_MODE, 
-  MODEL_NAME, 
+  MODEL_CONFIG,
   MAX_RETRIES, 
   BETTER_LOG,
-  MAX_TOKENS 
+  DEFAULT_MODEL
 } from "../config.js";
 import fs from "node:fs";
 import path from "node:path";
 
-let lastSpeechFile = null;
+let speechFiles = new Set();
 
 /**
  * Handles responding to a message with either text or voice
@@ -26,15 +26,22 @@ async function respondToMessage(message, client, conversationLog) {
     let attempts = 0;
     let result;
 
+    // Use the selected model or fall back to default
+    const modelToUse = client.currentModel || DEFAULT_MODEL;
+    
+    // Get model-specific configuration
+    const modelConfig = MODEL_CONFIG[modelToUse] || MODEL_CONFIG[DEFAULT_MODEL];
+
     while (attempts < MAX_RETRIES) {
       try {
         const requestPayload = {
-          model: MODEL_NAME,
+          model: modelToUse,
           messages: conversationLog,
         };
 
+        // Apply model-specific parameters for text mode
         if (client.currentMode === GPT_MODE.TEXT) {
-          requestPayload.max_tokens = MAX_TOKENS;
+          requestPayload[modelConfig.tokenParam] = modelConfig.maxTokens;
         }
 
         if (BETTER_LOG) {
@@ -50,6 +57,10 @@ async function respondToMessage(message, client, conversationLog) {
         attempts++;
         console.log(`OPENAI ERR (attempt ${attempts}): ${error}`);
         if (attempts === MAX_RETRIES) throw error;
+        
+        // Exponential backoff with jitter
+        const delay = Math.min(1000 * Math.pow(2, attempts - 1), 10000) + Math.random() * 1000;
+        await new Promise(resolve => setTimeout(resolve, delay));
       }
     }
 
@@ -80,13 +91,11 @@ async function respondToMessage(message, client, conversationLog) {
  * @param {string} text - The text to convert to speech
  */
 async function sendTtsResponse(message, client, text) {
-  const speechFile = path.resolve(`./speech-${Date.now()}.mp3`);
+  const speechFile = path.resolve(`./speech-${Date.now()}-${Math.random().toString(36).substr(2, 9)}.mp3`);
 
   try {
-    if (lastSpeechFile) {
-      await fs.promises.unlink(lastSpeechFile);
-      console.log(`Deleted previous speech file: ${lastSpeechFile}`);
-    }
+    // Clean up old files (keep only last 3 files to prevent accumulation)
+    await cleanupOldSpeechFiles();
 
     const mp3 = await client.openai.audio.speech.create({
       model: "tts-1-hd",
@@ -96,7 +105,7 @@ async function sendTtsResponse(message, client, text) {
 
     const buffer = Buffer.from(await mp3.arrayBuffer());
     await fs.promises.writeFile(speechFile, buffer);
-    lastSpeechFile = speechFile;
+    speechFiles.add(speechFile);
 
     await message.channel.send({
       files: [
@@ -106,11 +115,54 @@ async function sendTtsResponse(message, client, text) {
         },
       ],
     });
+
+    // Schedule cleanup after a delay to allow Discord to process the file
+    setTimeout(async () => {
+      try {
+        await fs.promises.unlink(speechFile);
+        speechFiles.delete(speechFile);
+        console.log(`Cleaned up speech file: ${speechFile}`);
+      } catch (error) {
+        console.error(`Error cleaning up speech file ${speechFile}:`, error);
+        speechFiles.delete(speechFile); // Remove from set even if deletion failed
+      }
+    }, 60000); // 1 minute delay
+
   } catch (error) {
     console.error("Error generating TTS audio:", error);
+    // Clean up file if it was created but sending failed
+    if (speechFiles.has(speechFile)) {
+      try {
+        await fs.promises.unlink(speechFile);
+        speechFiles.delete(speechFile);
+      } catch (cleanupError) {
+        console.error(`Error cleaning up failed speech file:`, cleanupError);
+        speechFiles.delete(speechFile);
+      }
+    }
     await message.channel.send(
       "An error occurred while generating the TTS audio."
     );
+  }
+}
+
+/**
+ * Clean up old speech files to prevent memory leaks
+ */
+async function cleanupOldSpeechFiles() {
+  if (speechFiles.size <= 3) return;
+
+  const filesToDelete = Array.from(speechFiles).slice(0, speechFiles.size - 3);
+  
+  for (const file of filesToDelete) {
+    try {
+      await fs.promises.unlink(file);
+      speechFiles.delete(file);
+      console.log(`Cleaned up old speech file: ${file}`);
+    } catch (error) {
+      console.error(`Error cleaning up old speech file ${file}:`, error);
+      speechFiles.delete(file); // Remove from set even if deletion failed
+    }
   }
 }
 

@@ -7,16 +7,14 @@
  * @returns {string[]} An array of message parts.
  */
 function splitMessage(content, maxLength = 2000) {
-  let contentStr =
-    typeof content === "string" ? content : JSON.stringify(content);
+  const contentStr = typeof content === "string" ? content : JSON.stringify(content);
+  
+  if (contentStr.length <= maxLength) return [contentStr];
+  
   const parts = [];
-
-  while (contentStr.length > 0) {
-    const part = contentStr.slice(0, maxLength);
-    contentStr = contentStr.slice(maxLength);
-    parts.push(part);
+  for (let i = 0; i < contentStr.length; i += maxLength) {
+    parts.push(contentStr.slice(i, i + maxLength));
   }
-
   return parts;
 }
 

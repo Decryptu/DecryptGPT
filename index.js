@@ -1,11 +1,10 @@
 import { Client, IntentsBitField, Partials } from "discord.js";
 import OpenAI from "openai";
 import "dotenv/config.js";
-
+import { DEFAULT_MODE, DEFAULT_MODEL } from "./config.js";
 import interactionCreate from "./events/interactionCreate.js";
 import messageCreate from "./events/messageCreate.js";
 import ready from "./events/ready.js";
-import createGptImage from "./utils/createGptImage.js";
 
 const client = new Client({
   intents: [
@@ -17,16 +16,22 @@ const client = new Client({
     IntentsBitField.Flags.DirectMessageTyping,
   ],
   partials: [Partials.Channel, Partials.Reaction, Partials.Message],
-  debug: true,
+  debug: process.env.NODE_ENV === 'development',
 });
 
 client.openai = new OpenAI({
   apiKey: process.env.API_KEY,
 });
 
-// Add the new function
-client.createGptImage = (description) =>
-  createGptImage(client, description);
+// Initialize modes and model
+client.currentMode = DEFAULT_MODE;
+client.currentModel = DEFAULT_MODEL;
+
+// Add image generation function (lazy import)
+client.createGptImage = async (description) => {
+  const { default: createGptImage } = await import('./utils/createGptImage.js');
+  return createGptImage(client, description);
+};
 
 client.on("ready", () => ready(client));
 client.on("messageCreate", (message) => messageCreate(message, client));
