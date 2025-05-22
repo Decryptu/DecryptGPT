@@ -1,6 +1,6 @@
-# EdgarGPT
+# DecryptGPT
 
-EdgarGPT is an advanced Discord bot developed by Decrypt, utilizing the `discord.js` library along with OpenAI's latest models including GPT-4o, GPT-4.1, and o3. The bot features image generation and editing capabilities using GPT-Image-1, voice message transcription with Whisper, and comprehensive document processing. Designed specifically for medical students and professionals, Edgar provides academic assistance and AI-powered conversations in French, making it ideal for advanced medical revisions and study sessions.
+DecryptGPT is an advanced Discord bot developed by Decrypt, utilizing the `discord.js` library along with OpenAI's latest models including GPT-4o, GPT-4.1, and o3. The bot features image generation and editing capabilities using GPT-Image-1, voice message transcription with Whisper, and comprehensive document processing. Designed specifically for medical students and professionals, Edgar provides academic assistance and AI-powered conversations in French, making it ideal for advanced medical revisions and study sessions.
 
 ## Features
 
@@ -22,7 +22,7 @@ EdgarGPT is an advanced Discord bot developed by Decrypt, utilizing the `discord
 
 ## Slash Commands
 
-EdgarGPT supports the following slash commands:
+DecryptGPT supports the following slash commands:
 
 - `/gpt-model` — Switch between AI models (GPT-4o, GPT-4.1, o3)
 - `/gpt-mode` — Toggle between text and voice interaction modes
@@ -33,7 +33,7 @@ All commands include comprehensive logging for monitoring and debugging purposes
 
 ## Configuration
 
-Before running EdgarGPT, configure the following:
+Before running DecryptGPT, configure the following:
 
 ### Environment Variables
 
@@ -64,13 +64,13 @@ Replace the placeholder values with your actual OpenAI API key and Discord bot c
 1. Clone the repository:
 
 ```bash
-git clone https://github.com/Decryptu/EdgarGPT.git
+git clone https://github.com/Decryptu/DecryptGPT.git
 ```
 
 2. Navigate to the project directory:
 
 ```bash
-cd EdgarGPT
+cd DecryptGPT
 ```
 
 3. Install dependencies:
@@ -127,7 +127,7 @@ The bot is built with modern JavaScript (ES modules) and includes:
 
 ## Contributing
 
-Contributions to EdgarGPT are welcome! Feel free to submit pull requests, create issues, or suggest new features.
+Contributions to DecryptGPT are welcome! Feel free to submit pull requests, create issues, or suggest new features.
 
 ## License
 
