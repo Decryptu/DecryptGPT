@@ -1,19 +1,11 @@
-/**
- * Splits a message into parts, each not exceeding a specified maximum length.
- * Handles strings and objects (converted to JSON strings).
- *
- * @param {string|object} content - The content to be split.
- * @param {number} maxLength - The maximum length of each part.
- * @returns {string[]} An array of message parts.
- */
+// utils/splitMessage.js
 function splitMessage(content, maxLength = 2000) {
-  const contentStr = typeof content === "string" ? content : JSON.stringify(content);
-  
-  if (contentStr.length <= maxLength) return [contentStr];
+  const str = typeof content === "string" ? content : JSON.stringify(content);
+  if (str.length <= maxLength) return [str];
   
   const parts = [];
-  for (let i = 0; i < contentStr.length; i += maxLength) {
-    parts.push(contentStr.slice(i, i + maxLength));
+  for (let i = 0; i < str.length; i += maxLength) {
+    parts.push(str.slice(i, i + maxLength));
   }
   return parts;
 }

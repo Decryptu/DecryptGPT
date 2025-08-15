@@ -108,3 +108,4 @@ speech-*.mp3
 .env
 config.js
 package-lock.json
+bun.lock

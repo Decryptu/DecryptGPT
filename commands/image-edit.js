@@ -1,105 +1,63 @@
+// commands/image-edit.js
 import { EmbedBuilder, AttachmentBuilder } from "discord.js";
-import axios from "axios";
 import { toFile } from "openai";
 
 async function imageEdit(interaction, client) {
-  // Immediately defer the reply to avoid timeout issues
   await interaction.deferReply();
   
   try {
-    // Log the interaction for debugging
-    console.log("Image edit command received:", {
-      user: interaction.user.tag,
-      options: interaction.options.data
-    });
-    
     const description = interaction.options.getString("description");
     const imageAttachment = interaction.options.getAttachment("image");
     
-    // Validate inputs after deferring to ensure we can respond properly
-    if (!description) {
-      return await interaction.editReply({
-        content: "Please provide an image description."
-      });
+    if (!imageAttachment?.contentType?.startsWith("image/")) {
+      return await interaction.editReply("Veuillez fournir une image valide (PNG, JPEG, WebP).");
     }
 
-    if (!imageAttachment) {
-      return await interaction.editReply({
-        content: "Please provide a valid image attachment."
-      });
-    }
+    console.log(`[IMAGE EDIT] ${interaction.user.username}: "${description}"`);
+    console.log(`[IMAGE EDIT] Input image: ${imageAttachment.name} (${imageAttachment.size} bytes)`);
 
-    // Log the attachment details
-    console.log("Attachment details:", {
-      name: imageAttachment.name,
-      contentType: imageAttachment.contentType,
-      size: imageAttachment.size,
-      url: imageAttachment.url
-    });
-
-    if (!imageAttachment.contentType?.startsWith("image/")) {
-      return await interaction.editReply({
-        content: "The provided attachment is not an image. Please upload a PNG, JPEG, or WebP image."
-      });
-    }
-    
-    // Download the image from Discord
-    console.log("Downloading image from Discord...");
-    const response = await axios.get(imageAttachment.url, { responseType: 'arraybuffer' });
-    const imageBuffer = Buffer.from(response.data);
-    console.log(`Image downloaded, size: ${imageBuffer.length} bytes`);
-    
-    // Convert to proper format for OpenAI
-    console.log("Converting image for OpenAI...");
-    const imageFile = await toFile(imageBuffer, imageAttachment.name || "image.png", {
+    const response = await fetch(imageAttachment.url);
+    const buffer = await response.arrayBuffer();
+    const imageFile = await toFile(buffer, imageAttachment.name, {
       type: imageAttachment.contentType
     });
-    console.log("Image converted successfully");
 
-    // Call the edit endpoint
-    console.log("Calling OpenAI edit API with prompt:", description);
     const result = await client.openai.images.edit({
       model: "gpt-image-1",
       image: imageFile,
       prompt: description,
+      // Removed response_format - no longer supported
     });
 
-    console.log("OpenAI API response received:", result);
-
-    if (!result?.data?.[0]?.b64_json) {
-      throw new Error("No image data returned from API");
+    // Check if response has base64 data or URL
+    let outputBuffer;
+    if (result.data[0].b64_json) {
+      // Base64 response
+      outputBuffer = Buffer.from(result.data[0].b64_json, "base64");
+      console.log(`[IMAGE EDIT] Received base64 edited image`);
+    } else if (result.data[0].url) {
+      // URL response - download the image
+      console.log(`[IMAGE EDIT] Downloading from URL: ${result.data[0].url}`);
+      const imageResponse = await fetch(result.data[0].url);
+      const arrayBuffer = await imageResponse.arrayBuffer();
+      outputBuffer = Buffer.from(arrayBuffer);
+    } else {
+      throw new Error("No image data in response");
     }
 
-    // Convert base64 to buffer for Discord attachment
-    const outputBuffer = Buffer.from(result.data[0].b64_json, "base64");
-    const attachment = new AttachmentBuilder(outputBuffer, { name: "edited-image.png" });
+    const attachment = new AttachmentBuilder(outputBuffer, { name: "edited.png" });
 
     const embed = new EmbedBuilder()
-      .setTitle("Image edited successfully")
+      .setTitle("Image modifiée")
       .setDescription(`Prompt: ${description}`)
-      .setImage("attachment://edited-image.png")
+      .setImage("attachment://edited.png")
       .setTimestamp();
 
-    await interaction.editReply({
-      content: null,
-      embeds: [embed],
-      files: [attachment]
-    });
-    
-    console.log("Successfully sent edited image response");
+    console.log(`[IMAGE EDIT] Success - Edited image sent to ${interaction.user.username}`);
+    await interaction.editReply({ embeds: [embed], files: [attachment] });
   } catch (error) {
-    console.error("Error in imageEdit function:", error);
-    
-    // Check for specific API errors
-    const errorMessage = error.response?.data?.error?.message || error.message || "Unknown error";
-    console.error("Detailed error:", errorMessage);
-    
-    // Always use editReply since we deferred at the beginning
-    await interaction.editReply({
-      content: `Failed to edit the image. Error: ${errorMessage}`,
-      embeds: [],
-      files: []
-    });
+    console.error("[IMAGE EDIT] Error:", error);
+    await interaction.editReply("Échec de modification d'image. " + (error.message || ""));
   }
 }
 

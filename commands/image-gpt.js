@@ -1,52 +1,59 @@
+// commands/image-gpt.js
 import { EmbedBuilder, AttachmentBuilder, MessageFlags } from "discord.js";
+import { GPT_IMAGE_MODEL, GPT_IMAGE_SIZE, GPT_IMAGE_QUALITY } from "../config.js";
 
 async function imageGpt(interaction, client) {
   const description = interaction.options.getString("description");
+  
   if (!description) {
-    await interaction.reply({
-      content: "Please provide an image description.",
+    return await interaction.reply({
+      content: "Veuillez fournir une description.",
       flags: MessageFlags.Ephemeral
     });
-    return;
   }
 
-  try {
-    // Acknowledge the interaction immediately to prevent timeouts
-    await interaction.deferReply();
-    
-    const imageBase64 = await client.createGptImage(description);
+  await interaction.deferReply();
+  console.log(`[IMAGE GENERATION] ${interaction.user.username}: "${description}"`);
 
-    if (!imageBase64) {
-      throw new Error("No image data returned");
+  try {
+    const response = await client.openai.images.generate({
+      model: GPT_IMAGE_MODEL,
+      prompt: description,
+      n: 1,
+      size: GPT_IMAGE_SIZE,
+      quality: GPT_IMAGE_QUALITY,
+      // Removed response_format - no longer supported
+    });
+
+    // Check if response has base64 data or URL
+    let buffer;
+    if (response.data[0].b64_json) {
+      // Base64 response
+      buffer = Buffer.from(response.data[0].b64_json, "base64");
+      console.log(`[IMAGE GENERATION] Received base64 image`);
+    } else if (response.data[0].url) {
+      // URL response - download the image
+      console.log(`[IMAGE GENERATION] Downloading from URL: ${response.data[0].url}`);
+      const imageResponse = await fetch(response.data[0].url);
+      const arrayBuffer = await imageResponse.arrayBuffer();
+      buffer = Buffer.from(arrayBuffer);
+    } else {
+      throw new Error("No image data in response");
     }
 
-    // Convert base64 to buffer for Discord attachment
-    const buffer = Buffer.from(imageBase64, "base64");
-    const attachment = new AttachmentBuilder(buffer, { name: "generated-image.png" });
+    const attachment = new AttachmentBuilder(buffer, { name: "image.png" });
 
     const embed = new EmbedBuilder()
-      .setTitle("Votre image")
-      .setImage("attachment://generated-image.png");
+      .setTitle("Image générée")
+      .setDescription(`Prompt: ${description}`)
+      .setImage("attachment://image.png")
+      .setTimestamp();
 
-    await interaction.editReply({
-      embeds: [embed],
-      files: [attachment]
-    });
+    console.log(`[IMAGE GENERATION] Success - Image sent to ${interaction.user.username}`);
+    await interaction.editReply({ embeds: [embed], files: [attachment] });
   } catch (error) {
-    console.error("Error in imageGpt function:", error);
-    
-    // Check if the interaction has already been replied to
-    if (interaction.deferred || interaction.replied) {
-      await interaction.editReply({
-        content: "Échec de la génération d'une image. Veuillez réessayer ultérieurement.",
-        files: []
-      });
-    } else {
-      await interaction.reply({
-        content: "Échec de la génération d'une image. Veuillez réessayer ultérieurement.",
-        flags: MessageFlags.Ephemeral
-      });
-    }
+    console.error("[IMAGE GENERATION] Error:", error);
+    await interaction.editReply("Échec de génération d'image. " + (error.message || ""));
   }
 }
 

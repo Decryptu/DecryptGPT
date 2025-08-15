@@ -1,168 +1,177 @@
+// utils/respondToMessage.js
+import { MODEL_CONFIG, MAX_RETRIES, MODEL_SURNAMES } from "../config.js";
 import splitMessage from "./splitMessage.js";
 import handleApiErrors from "./handleApiErrors.js";
-import { 
-  GPT_MODE, 
-  MODEL_CONFIG,
-  MAX_RETRIES, 
-  BETTER_LOG,
-  DEFAULT_MODEL
-} from "../config.js";
-import fs from "node:fs";
-import path from "node:path";
+import { MessageFlags } from "discord.js";
 
-let speechFiles = new Set();
-
-/**
- * Handles responding to a message with either text or voice
- * @param {Message} message - The Discord message to respond to
- * @param {Client} client - The Discord client instance
- * @param {Array} conversationLog - Array of previous messages for context
- */
-async function respondToMessage(message, client, conversationLog) {
+async function respondToMessage(message, client, input) {
   const typingInterval = setInterval(() => message.channel.sendTyping(), 5000);
 
   try {
     await message.channel.sendTyping();
+    
+    const modelConfig = MODEL_CONFIG[client.currentModel];
+    const modelName = MODEL_SURNAMES[client.currentModel];
     let attempts = 0;
     let result;
 
-    // Use the selected model or fall back to default
-    const modelToUse = client.currentModel || DEFAULT_MODEL;
-    
-    // Get model-specific configuration
-    const modelConfig = MODEL_CONFIG[modelToUse] || MODEL_CONFIG[DEFAULT_MODEL];
+    console.log(`[MODEL] Using ${modelName} for ${message.author.username}`);
 
     while (attempts < MAX_RETRIES) {
       try {
         const requestPayload = {
-          model: modelToUse,
-          messages: conversationLog,
+          model: modelConfig.model,
+          input: input,
+          max_output_tokens: modelConfig.maxOutputTokens,
         };
 
-        // Apply model-specific parameters for text mode
-        if (client.currentMode === GPT_MODE.TEXT) {
-          requestPayload[modelConfig.tokenParam] = modelConfig.maxTokens;
+        // Add reasoning if needed
+        if (modelConfig.reasoning) {
+          requestPayload.reasoning = modelConfig.reasoning;
+          console.log(`[REASONING] Enabled with effort: ${modelConfig.reasoning.effort}`);
         }
 
-        if (BETTER_LOG) {
-          console.log(
-            "Full request payload:",
-            JSON.stringify(requestPayload, null, 2)
-          );
+        // Add web search if available
+        if (modelConfig.hasWebSearch) {
+          requestPayload.tools = [{ type: "web_search_preview" }];
+          requestPayload.tool_choice = "auto";
         }
 
-        result = await client.openai.chat.completions.create(requestPayload);
+        result = await client.openai.responses.create(requestPayload);
         break;
       } catch (error) {
         attempts++;
-        console.log(`OPENAI ERR (attempt ${attempts}): ${error}`);
+        console.error(`[API ERROR] Attempt ${attempts}/${MAX_RETRIES}:`, error.message);
         if (attempts === MAX_RETRIES) throw error;
         
-        // Exponential backoff with jitter
-        const delay = Math.min(1000 * Math.pow(2, attempts - 1), 10000) + Math.random() * 1000;
+        const delay = Math.min(1000 * 2 ** attempts, 10000);
         await new Promise(resolve => setTimeout(resolve, delay));
       }
     }
 
-    const messageContent = result.choices[0].message.content;
-    const tokenUsage = result.usage.total_tokens;
-    console.log(`Tokens used: ${tokenUsage}`);
+    // Process response and extract content
+    let messageContent = "";
+    let hasWebSearch = false;
+    let webSearchQueries = [];
+    let annotations = [];
+    let outputItemCount = 0;
 
-    if (client.currentMode === GPT_MODE.VOICE) {
-      await sendTtsResponse(message, client, messageContent);
+    if (result.output) {
+      console.log(`[DEBUG] Response has ${result.output.length} output items`);
+      
+      for (const item of result.output) {
+        outputItemCount++;
+        console.log(`[DEBUG] Output item ${outputItemCount}: type=${item.type}, status=${item.status || 'N/A'}`);
+        
+        // Check for web search calls
+        if (item.type === "web_search_call") {
+          hasWebSearch = true;
+          // Check if queries exist in the item
+          if (item.queries && item.queries.length > 0) {
+            webSearchQueries = item.queries;
+            console.log(`[WEB SEARCH] Active with queries:`, webSearchQueries);
+          } else {
+            console.log(`[WEB SEARCH] Detected but no queries executed`);
+          }
+        }
+        
+        // Extract message content - handle both completed and in_progress
+        if (item.type === "message") {
+          if (item.content && Array.isArray(item.content)) {
+            for (const content of item.content) {
+              if (content.type === "output_text" && content.text) {
+                messageContent += content.text;
+                console.log(`[DEBUG] Extracted ${content.text.length} characters from output_text`);
+                
+                // Store annotations if present
+                if (content.annotations) {
+                  annotations = content.annotations;
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+
+    // Log actual web search usage
+    if (hasWebSearch && webSearchQueries.length > 0) {
+      console.log(`[TOOLS] Web search executed - ${webSearchQueries.length} queries`);
+    } else if (hasWebSearch) {
+      console.log(`[TOOLS] Web search was considered but not executed`);
+    }
+
+    // Add source citations if web search was actually used
+    if (annotations && annotations.length > 0) {
+      const urlCitations = annotations.filter(a => a.type === "url_citation");
+      if (urlCitations.length > 0) {
+        console.log(`[WEB SOURCES] Found ${urlCitations.length} sources`);
+        
+        // Create a set to avoid duplicates
+        const sources = new Map();
+        for (const citation of urlCitations) {
+          if (!sources.has(citation.url)) {
+            sources.set(citation.url, citation.title || "Source");
+          }
+        }
+        
+        // Append sources to message
+        if (sources.size > 0) {
+          messageContent += "\n\n**Sources:**\n";
+          let index = 1;
+          for (const [url, title] of sources) {
+            messageContent += `${index}. [${title}](${url})\n`;
+            index++;
+          }
+        }
+      }
+    }
+
+    // Check if we actually got content
+    if (!messageContent || messageContent.trim() === "") {
+      console.error("[RESPONSE] Empty response received - checking raw result");
+      console.log("[DEBUG] Raw result output:", JSON.stringify(result.output, null, 2).substring(0, 1000));
+      messageContent = "Désolé, je n'ai pas pu générer de réponse complète. Veuillez réessayer.";
     } else {
-      const messageParts = splitMessage(messageContent);
-      for (const part of messageParts) {
-        await message.channel.send(part);
+      console.log(`[RESPONSE] Total content length: ${messageContent.length} characters`);
+    }
+
+    // Send response in chunks if needed
+    const messageParts = splitMessage(messageContent, 2000);
+    console.log(`[RESPONSE] Sending ${messageParts.length} part(s) to ${message.author.username}`);
+    
+    for (let i = 0; i < messageParts.length; i++) {
+      const messageOptions = { 
+        content: messageParts[i],
+        allowedMentions: { repliedUser: false }
+      };
+      
+      // Suppress embeds for web search results to avoid preview spam
+      if (hasWebSearch && annotations.length > 0) {
+        messageOptions.flags = MessageFlags.SuppressEmbeds;
+      }
+      
+      await message.channel.send(messageOptions);
+    }
+
+    // Log token usage with more details
+    if (result.usage) {
+      const usage = result.usage;
+      console.log(`[TOKENS] Total: ${usage.total_tokens} (Input: ${usage.input_tokens}, Output: ${usage.output_tokens}${usage.output_tokens_details?.reasoning_tokens ? `, Reasoning: ${usage.output_tokens_details.reasoning_tokens}` : ''})`);
+      
+      // Warning for high token usage
+      if (usage.input_tokens > 20000) {
+        console.warn(`[WARNING] High input token usage: ${usage.input_tokens} tokens`);
+      }
+      if (usage.total_tokens > 50000) {
+        console.warn(`[WARNING] High total token usage: ${usage.total_tokens} tokens`);
       }
     }
   } catch (error) {
-    console.error("Error:", error);
+    console.error("[RESPONSE ERROR]", error);
     await handleApiErrors(message, error);
   } finally {
     clearInterval(typingInterval);
-  }
-}
-
-/**
- * Handles generating and sending TTS audio responses
- * @param {Message} message - The Discord message to respond to
- * @param {Client} client - The Discord client instance
- * @param {string} text - The text to convert to speech
- */
-async function sendTtsResponse(message, client, text) {
-  const speechFile = path.resolve(`./speech-${Date.now()}-${Math.random().toString(36).substr(2, 9)}.mp3`);
-
-  try {
-    // Clean up old files (keep only last 3 files to prevent accumulation)
-    await cleanupOldSpeechFiles();
-
-    const mp3 = await client.openai.audio.speech.create({
-      model: "tts-1-hd",
-      voice: "echo",
-      input: text,
-    });
-
-    const buffer = Buffer.from(await mp3.arrayBuffer());
-    await fs.promises.writeFile(speechFile, buffer);
-    speechFiles.add(speechFile);
-
-    await message.channel.send({
-      files: [
-        {
-          attachment: speechFile,
-          name: "response.mp3",
-        },
-      ],
-    });
-
-    // Schedule cleanup after a delay to allow Discord to process the file
-    setTimeout(async () => {
-      try {
-        await fs.promises.unlink(speechFile);
-        speechFiles.delete(speechFile);
-        console.log(`Cleaned up speech file: ${speechFile}`);
-      } catch (error) {
-        console.error(`Error cleaning up speech file ${speechFile}:`, error);
-        speechFiles.delete(speechFile); // Remove from set even if deletion failed
-      }
-    }, 60000); // 1 minute delay
-
-  } catch (error) {
-    console.error("Error generating TTS audio:", error);
-    // Clean up file if it was created but sending failed
-    if (speechFiles.has(speechFile)) {
-      try {
-        await fs.promises.unlink(speechFile);
-        speechFiles.delete(speechFile);
-      } catch (cleanupError) {
-        console.error(`Error cleaning up failed speech file:`, cleanupError);
-        speechFiles.delete(speechFile);
-      }
-    }
-    await message.channel.send(
-      "An error occurred while generating the TTS audio."
-    );
-  }
-}
-
-/**
- * Clean up old speech files to prevent memory leaks
- */
-async function cleanupOldSpeechFiles() {
-  if (speechFiles.size <= 3) return;
-
-  const filesToDelete = Array.from(speechFiles).slice(0, speechFiles.size - 3);
-  
-  for (const file of filesToDelete) {
-    try {
-      await fs.promises.unlink(file);
-      speechFiles.delete(file);
-      console.log(`Cleaned up old speech file: ${file}`);
-    } catch (error) {
-      console.error(`Error cleaning up old speech file ${file}:`, error);
-      speechFiles.delete(file); // Remove from set even if deletion failed
-    }
   }
 }
 

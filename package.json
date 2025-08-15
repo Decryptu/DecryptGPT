@@ -27,13 +27,13 @@
     },
     "homepage": "https://github.com/Decryptu/DecryptGPT#readme",
     "dependencies": {
-        "axios": "^1.9.0",
+        "axios": "^1.11.0",
         "date-fns": "^4.1.0",
         "date-fns-tz": "^3.2.0",
-        "discord.js": "^14.19.3",
-        "dotenv": "^16.5.0",
-        "form-data": "^4.0.2",
-        "openai": "^4.103.0",
+        "discord.js": "^14.21.0",
+        "dotenv": "^17.2.1",
+        "form-data": "^4.0.4",
+        "openai": "^5.12.2",
         "papaparse": "^5.5.3",
         "pdf.js-extract": "^0.2.1",
         "xlsx": "^0.18.5"

@@ -1,10 +1,13 @@
-import { format } from "date-fns";
-import { toZonedTime } from "date-fns-tz";
-
+// utils/dateUtils.js
 export function getFormattedDate() {
-  const timeZone = "Europe/Paris";
   const now = new Date();
-  const zonedDate = toZonedTime(now, timeZone);
-
-  return format(zonedDate, "dd/MM/yyyy HH:mm", { timeZone });
+  const options = { 
+    timeZone: "Europe/Paris",
+    day: "2-digit",
+    month: "2-digit", 
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit"
+  };
+  return now.toLocaleString("fr-FR", options);
 }
