@@ -1,12 +1,16 @@
-// events/ready.js
-import { ApplicationCommandOptionType } from "discord.js";
+// events/ready.ts
+import { type Client, ApplicationCommandOptionType } from "discord.js";
 import { AI_NAME, DEFAULT_MODEL, GPT_MODELS, MODEL_SURNAMES } from "../config.js";
 import setBotActivity from "../utils/setBotActivity.js";
 
-async function ready(client) {
+interface ExtendedClient extends Client {
+  currentModel?: string;
+}
+
+async function ready(client: ExtendedClient): Promise<void> {
   console.log(`[STARTUP] ${AI_NAME} is online!`);
   console.log(`[STARTUP] Default model: ${MODEL_SURNAMES[DEFAULT_MODEL]}`);
-  
+
   client.currentModel = DEFAULT_MODEL;
   setBotActivity(client, client.currentModel);
 
@@ -60,7 +64,7 @@ async function ready(client) {
   ];
 
   try {
-    await client.application.commands.set(commands);
+    await client.application?.commands.set(commands as any);
     console.log(`[COMMANDS] Registered ${commands.length} commands successfully`);
   } catch (error) {
     console.error("[COMMANDS] Error registering commands:", error);

@@ -1,16 +1,21 @@
-// commands/image-edit.js
-import { EmbedBuilder, AttachmentBuilder } from "discord.js";
+// commands/image-edit.ts
+import { type ChatInputCommandInteraction, type Client, EmbedBuilder, AttachmentBuilder } from "discord.js";
 import { toFile } from "openai";
 
-async function imageEdit(interaction, client) {
+interface ExtendedClient extends Client {
+  openai: any;
+}
+
+async function imageEdit(interaction: ChatInputCommandInteraction, client: ExtendedClient): Promise<void> {
   await interaction.deferReply();
-  
+
   try {
     const description = interaction.options.getString("description");
     const imageAttachment = interaction.options.getAttachment("image");
-    
+
     if (!imageAttachment?.contentType?.startsWith("image/")) {
-      return await interaction.editReply("Veuillez fournir une image valide (PNG, JPEG, WebP).");
+      await interaction.editReply("Veuillez fournir une image valide (PNG, JPEG, WebP).");
+      return;
     }
 
     console.log(`[IMAGE EDIT] ${interaction.user.username}: "${description}"`);
@@ -30,7 +35,7 @@ async function imageEdit(interaction, client) {
     });
 
     // Check if response has base64 data or URL
-    let outputBuffer;
+    let outputBuffer: Buffer;
     if (result.data[0].b64_json) {
       // Base64 response
       outputBuffer = Buffer.from(result.data[0].b64_json, "base64");
@@ -55,7 +60,7 @@ async function imageEdit(interaction, client) {
 
     console.log(`[IMAGE EDIT] Success - Edited image sent to ${interaction.user.username}`);
     await interaction.editReply({ embeds: [embed], files: [attachment] });
-  } catch (error) {
+  } catch (error: any) {
     console.error("[IMAGE EDIT] Error:", error);
     await interaction.editReply("Échec de modification d'image. " + (error.message || ""));
   }

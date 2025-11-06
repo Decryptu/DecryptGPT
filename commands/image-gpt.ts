@@ -1,15 +1,20 @@
-// commands/image-gpt.js
-import { EmbedBuilder, AttachmentBuilder, MessageFlags } from "discord.js";
+// commands/image-gpt.ts
+import { type ChatInputCommandInteraction, type Client, EmbedBuilder, AttachmentBuilder, MessageFlags } from "discord.js";
 import { GPT_IMAGE_MODEL, GPT_IMAGE_SIZE, GPT_IMAGE_QUALITY } from "../config.js";
 
-async function imageGpt(interaction, client) {
+interface ExtendedClient extends Client {
+  openai: any;
+}
+
+async function imageGpt(interaction: ChatInputCommandInteraction, client: ExtendedClient): Promise<void> {
   const description = interaction.options.getString("description");
-  
+
   if (!description) {
-    return await interaction.reply({
+    await interaction.reply({
       content: "Veuillez fournir une description.",
       flags: MessageFlags.Ephemeral
     });
+    return;
   }
 
   await interaction.deferReply();
@@ -26,7 +31,7 @@ async function imageGpt(interaction, client) {
     });
 
     // Check if response has base64 data or URL
-    let buffer;
+    let buffer: Buffer;
     if (response.data[0].b64_json) {
       // Base64 response
       buffer = Buffer.from(response.data[0].b64_json, "base64");
@@ -51,7 +56,7 @@ async function imageGpt(interaction, client) {
 
     console.log(`[IMAGE GENERATION] Success - Image sent to ${interaction.user.username}`);
     await interaction.editReply({ embeds: [embed], files: [attachment] });
-  } catch (error) {
+  } catch (error: any) {
     console.error("[IMAGE GENERATION] Error:", error);
     await interaction.editReply("Échec de génération d'image. " + (error.message || ""));
   }

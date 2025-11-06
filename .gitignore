@@ -107,5 +107,7 @@ ecosystem.config.js
 speech-*.mp3
 .env
 config.js
+config.ts
+channels.ts
 package-lock.json
 bun.lock

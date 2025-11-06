@@ -1,4 +1,5 @@
-// events/messageCreate.js
+// events/messageCreate.ts
+import type { Message, Client } from "discord.js";
 import shouldIgnoreMessage from "../utils/shouldIgnoreMessage.js";
 import reactWithRandomEmoji from "../utils/reactWithRandomEmoji.js";
 import buildInput from "../utils/buildInput.js";
@@ -6,7 +7,7 @@ import respondToMessage from "../utils/respondToMessage.js";
 import handleApiErrors from "../utils/handleApiErrors.js";
 import { CHAT_GPT_ENABLED, THANK_YOU_KEYWORD } from "../config.js";
 
-async function messageCreate(message, client) {
+async function messageCreate(message: Message, client: Client): Promise<void> {
   if (shouldIgnoreMessage(message)) return;
 
   try {
@@ -18,7 +19,7 @@ async function messageCreate(message, client) {
 
     if (CHAT_GPT_ENABLED) {
       const input = await buildInput(message, client);
-      await respondToMessage(message, client, input);
+      await respondToMessage(message, client as any, input);
     }
   } catch (error) {
     console.error("[MESSAGE ERROR]", error);

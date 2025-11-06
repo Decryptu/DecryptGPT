@@ -1,15 +1,20 @@
-// commands/gpt-model.js
+// commands/gpt-model.ts
+import { type ChatInputCommandInteraction, type Client, MessageFlags } from "discord.js";
 import { GPT_MODELS, MODEL_SURNAMES } from "../config.js";
 import setBotActivity from "../utils/setBotActivity.js";
-import { MessageFlags } from "discord.js";
 
-async function gptModel(interaction, client) {
+interface ExtendedClient extends Client {
+  currentModel: string;
+}
+
+async function gptModel(interaction: ChatInputCommandInteraction, client: ExtendedClient): Promise<void> {
   await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
   const selectedModel = interaction.options.getString("model");
-  
-  if (!Object.values(GPT_MODELS).includes(selectedModel)) {
-    return await interaction.editReply({ content: "Modèle invalide." });
+
+  if (!selectedModel || !Object.values(GPT_MODELS).includes(selectedModel)) {
+    await interaction.editReply({ content: "Modèle invalide." });
+    return;
   }
 
   const previousModel = MODEL_SURNAMES[client.currentModel];
@@ -18,7 +23,7 @@ async function gptModel(interaction, client) {
 
   const newModel = MODEL_SURNAMES[selectedModel];
   console.log(`[MODEL SWITCH] ${interaction.user.username}: ${previousModel} → ${newModel}`);
-  
+
   await interaction.editReply({ content: `Modèle activé: ${newModel}` });
 }
 

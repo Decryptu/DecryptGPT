@@ -32,7 +32,7 @@ EdgarGPT is a Discord bot powered by OpenAI's latest GPT-5 model and Responses A
 ```bash
 git clone https://github.com/Decryptu/EdgarGPT.git
 cd EdgarGPT
-bun install
+npm install
 ```
 
 ### Configuration
@@ -45,12 +45,24 @@ TOKEN=your_discord_bot_token
 CLIENT_ID=your_discord_app_client_id
 ```
 
-Add allowed channel IDs in `channels.mjs`.
+Copy and configure the example files:
+
+```bash
+cp config.example.ts config.ts
+cp channels.example.ts channels.ts
+```
+
+Edit `channels.ts` to add your allowed channel IDs.
 
 ## Usage
 
-**Production**: `bun start`  
-**Development**: `bun run dev`
+**Development**: `npm run dev`
+
+**Production**:
+```bash
+npm run build
+npm start
+```
 
 ### Examples
 
@@ -68,9 +80,9 @@ Switch to reasoning mode:
 
 ## Tech Stack
 
+- **TypeScript** - Type-safe development
 - **Discord.js v14** - Discord API integration
 - **OpenAI Responses API** - Unified AI interface
-- **ES Modules** - Modern JavaScript architecture
 
 ## License
 

@@ -1,4 +1,4 @@
-// index.js
+// index.ts
 import { Client, GatewayIntentBits, Partials } from "discord.js";
 import OpenAI from "openai";
 import "dotenv/config";
@@ -6,6 +6,12 @@ import { DEFAULT_MODEL } from "./config.js";
 import interactionCreate from "./events/interactionCreate.js";
 import messageCreate from "./events/messageCreate.js";
 import ready from "./events/ready.js";
+
+// Extend the Client type to include custom properties
+interface ExtendedClient extends Client {
+  openai: OpenAI;
+  currentModel: string;
+}
 
 const client = new Client({
   intents: [
@@ -17,7 +23,7 @@ const client = new Client({
     GatewayIntentBits.DirectMessageTyping,
   ],
   partials: [Partials.Channel, Partials.Reaction, Partials.Message],
-});
+}) as ExtendedClient;
 
 client.openai = new OpenAI({
   apiKey: process.env.API_KEY,
@@ -35,7 +41,7 @@ client.login(process.env.TOKEN);
 
 // Graceful shutdown
 let isShuttingDown = false;
-async function gracefulShutdown() {
+async function gracefulShutdown(): Promise<void> {
   if (isShuttingDown) return;
   isShuttingDown = true;
   console.log("Shutting down gracefully...");
